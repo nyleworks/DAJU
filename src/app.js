@@ -250,7 +250,7 @@
         <div className="wrap hero-grid">
           <div className="hero-copy">
             <div className="hero-doodles">
-              <${D.SpeechBubble} size=${p.narrow ? 100 : 150} tilt=${-14}>something special, every week<//>
+              <${D.SpeechBubble} className="hero-bubble" size=${p.narrow ? 128 : 170} tilt=${-10}>One week. One matcha. A little surprise<//>
               <${HeroWhisk} size=${p.narrow ? 190 : 260} />
             </div>
             <${D.StickerHeadline} as="h1" size="xl">Matcha<br />of the week?<//>

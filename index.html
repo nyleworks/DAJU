@@ -1101,6 +1101,10 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 /* Hero whisk graphic */
 .hero-whisk { display: block; height: auto; color: #c9dd7e; overflow: visible; }
 .hero-whisk .whisk { transform-box: view-box; transform-origin: 180px 90px; transform: translate(var(--wx, 0px), var(--wy, 0px)) rotate(calc(var(--wr, 0deg) * .3)); }
+/* Hero speech bubble: longer line, so a smaller script size keeps it inside the bubble */
+.hero-bubble .dj-bubble-text { font-size: 0.96em !important; max-width: 70%; margin-top: -14%; line-height: 1.1; }
+.hero-bubble { font-size: 14px; }
+@media (min-width: 721px) { .hero-bubble { font-size: 18px; } }
 
 </style>
 </head>
@@ -1669,7 +1673,7 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
         <div className="wrap hero-grid">
           <div className="hero-copy">
             <div className="hero-doodles">
-              <${D.SpeechBubble} size=${p.narrow ? 100 : 150} tilt=${-14}>something special, every week<//>
+              <${D.SpeechBubble} className="hero-bubble" size=${p.narrow ? 128 : 170} tilt=${-10}>One week. One matcha. A little surprise<//>
               <${HeroWhisk} size=${p.narrow ? 190 : 260} />
             </div>
             <${D.StickerHeadline} as="h1" size="xl">Matcha<br />of the week?<//>
