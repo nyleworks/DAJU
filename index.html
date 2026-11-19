@@ -1088,6 +1088,9 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 .checkout-drawer .dj-drawer-foot { border-top: 2px dashed var(--color-ribbon); }
 .checkout-drawer .sum-row span:last-child { padding: 0 8px; border-radius: 6px; background: rgb(244 182 194 / .45); }
 
+/* Hero "Matcha of the Week" tag in pink */
+.dj-stamp.stamp-pink { background: var(--color-ribbon); color: var(--color-forest); border-color: var(--color-forest); }
+
 </style>
 </head>
 <body>
@@ -1670,7 +1673,7 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
             <p className="flavor-script" aria-hidden="true">Blue Sea Salt</p>
             <img className="hero-cutout" src="blue-sea-salt-cutout.png" width="433" height="521" alt=${PHOTO_ALT} />
             <div style=${{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
-              <${D.Stamp} tone="forest" rotate=${-4}>Matcha of the Week<//>
+              <${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink">Matcha of the Week<//>
               <span className="time" style=${{ color: 'var(--heading)' }}>${priceText(WEEKLY.price)}</span>
             </div>
           </div>

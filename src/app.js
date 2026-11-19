@@ -265,7 +265,7 @@
             <p className="flavor-script" aria-hidden="true">Blue Sea Salt</p>
             <img className="hero-cutout" src="blue-sea-salt-cutout.png" width="433" height="521" alt=${PHOTO_ALT} />
             <div style=${{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
-              <${D.Stamp} tone="forest" rotate=${-4}>Matcha of the Week<//>
+              <${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink">Matcha of the Week<//>
               <span className="time" style=${{ color: 'var(--heading)' }}>${priceText(WEEKLY.price)}</span>
             </div>
           </div>
