@@ -250,7 +250,6 @@
         <div className="wrap hero-grid">
           <div className="hero-copy">
             <div className="hero-doodles">
-              <${D.SpeechBubble} className="hero-bubble" size=${p.narrow ? 128 : 170} tilt=${-10}>One week. One matcha. A little surprise<//>
               <${HeroWhisk} size=${p.narrow ? 190 : 260} />
             </div>
             <${D.StickerHeadline} as="h1" size="xl">Matcha<br />of the week?<//>
@@ -262,7 +261,10 @@
           <div className="hero-cup">
             <p className="editorial-md p0" style=${{ textTransform: 'uppercase', color: 'var(--heading)', letterSpacing: '0.32em' }}>Matcha</p>
             <p className="flavor-script" aria-hidden="true">Blue Sea Salt</p>
-            <img className="hero-cutout" src="blue-sea-salt-cutout.png" width="433" height="521" alt=${PHOTO_ALT} />
+            <div className="hero-photo">
+              <img className="hero-cutout" src="blue-sea-salt-cutout.png" width="433" height="521" alt=${PHOTO_ALT} />
+              <${D.SpeechBubble} className="hero-bubble" size=${p.narrow ? 112 : 150} tilt=${8}>One week. One matcha. A little surprise<//>
+            </div>
             <div style=${{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
               <${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink">Matcha of the Week<//>
               <span className="time" style=${{ color: 'var(--heading)' }}>${priceText(WEEKLY.price)}</span>

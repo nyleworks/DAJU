@@ -1105,6 +1105,12 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 .hero-bubble .dj-bubble-text { font-size: 0.96em !important; max-width: 70%; margin-top: -14%; line-height: 1.1; }
 .hero-bubble { font-size: 14px; }
 @media (min-width: 721px) { .hero-bubble { font-size: 18px; } }
+/* Speech bubble sits at the top right of the cup photo */
+.hero-photo { position: relative; display: inline-block; }
+.hero-photo .hero-bubble { position: absolute; top: -30px; right: -62px; z-index: 2; }
+.hero-photo .hero-bubble .dj-bubble-text { margin-top: -12%; }
+.hero-bubble { font-size: 12.5px; }
+@media (min-width: 721px) { .hero-photo .hero-bubble { right: -128px; top: -40px; } .hero-bubble { font-size: 16px; } }
 
 </style>
 </head>
@@ -1673,7 +1679,6 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
         <div className="wrap hero-grid">
           <div className="hero-copy">
             <div className="hero-doodles">
-              <${D.SpeechBubble} className="hero-bubble" size=${p.narrow ? 128 : 170} tilt=${-10}>One week. One matcha. A little surprise<//>
               <${HeroWhisk} size=${p.narrow ? 190 : 260} />
             </div>
             <${D.StickerHeadline} as="h1" size="xl">Matcha<br />of the week?<//>
@@ -1685,7 +1690,10 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
           <div className="hero-cup">
             <p className="editorial-md p0" style=${{ textTransform: 'uppercase', color: 'var(--heading)', letterSpacing: '0.32em' }}>Matcha</p>
             <p className="flavor-script" aria-hidden="true">Blue Sea Salt</p>
-            <img className="hero-cutout" src="blue-sea-salt-cutout.png" width="433" height="521" alt=${PHOTO_ALT} />
+            <div className="hero-photo">
+              <img className="hero-cutout" src="blue-sea-salt-cutout.png" width="433" height="521" alt=${PHOTO_ALT} />
+              <${D.SpeechBubble} className="hero-bubble" size=${p.narrow ? 112 : 150} tilt=${8}>One week. One matcha. A little surprise<//>
+            </div>
             <div style=${{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
               <${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink">Matcha of the Week<//>
               <span className="time" style=${{ color: 'var(--heading)' }}>${priceText(WEEKLY.price)}</span>
