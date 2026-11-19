@@ -722,3 +722,6 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 /* Hero whisk graphic */
 .hero-whisk { display: block; height: auto; color: #c9dd7e; overflow: visible; }
 .hero-whisk .whisk { transform-box: view-box; transform-origin: 180px 90px; transform: translate(var(--wx, 0px), var(--wy, 0px)) rotate(calc(var(--wr, 0deg) * .3)); }
+
+/* Big price: "RM" in green, the number stays pink */
+.price-tag-price .price-rm { color: var(--color-doodle, #9edb57); }

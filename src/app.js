@@ -330,7 +330,7 @@
       <span className="boom-sparks" aria-hidden="true">${SPARKS.map(function (k, i) { return html`<i key=${i} className=${'is-' + k.c} style=${{ '--bx': k.x + 'px', '--by': k.y + 'px', '--bs': k.s + 'px', animationDelay: k.delay + 'ms' }}></i>`; })}</span>
       <div className="price-tag">
         <span className="price-tag-kicker">Matcha of the Week</span>
-        <span className="price-tag-price">${WEEKLY_PRICE}</span>
+        <span className="price-tag-price"><span className="price-rm">${WEEKLY_PRICE.slice(0, 2)}</span>${WEEKLY_PRICE.slice(2)}</span>
         <span className="price-tag-drink">${WEEKLY.name} · this week only</span>
       </div>
     </div>`;
