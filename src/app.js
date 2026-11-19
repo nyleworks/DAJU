@@ -752,7 +752,7 @@
         <div className="wrap foot-grid">
           <div style=${{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
             <${D.Wordmark} size="sm" />
-            <p className="script">something special, every week</p>
+            <p className="script">One week. One matcha. A little surprise</p>
           </div>
           <nav aria-label="Footer">
             <a href="#drop" className="label">Weekly Drop</a>
