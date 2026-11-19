@@ -685,6 +685,61 @@
       </section>`;
   }
 
+  /* ---------- Pop-ups (above the footer) ----------
+     To add a pop-up, add a line to POPUPS. Dates are YYYY-MM-DD in KK time; past pop-ups hide themselves. */
+  var POPUPS = [
+    { start: '2026-11-21', end: '2026-11-22', days: 'Sat 21 – Sun 22 Nov', time: '10 AM – 8 PM', venue: 'Palm Square', place: 'Centre Point, Kota Kinabalu' }
+  ];
+  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  function mapsUrl(pu) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(pu.venue + ', ' + pu.place); }
+  function popBadge(pu, today) {
+    if (pu.start <= today && today <= pu.end) return 'Happening now';
+    var days = Math.round((new Date(pu.start + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+    if (days === 1) return 'Tomorrow';
+    if (days <= 6) return 'This weekend';
+    if (days <= 13) return 'Next week';
+    return 'Coming up';
+  }
+  function PopUps(p) {
+    var today = ymd(myt());
+    var list = POPUPS.filter(function (pu) { return pu.end >= today; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
+    var next = list[0], later = list.slice(1, 4);
+    return html`
+      <section id="popups" className="band popups" aria-labelledby="popups-title">
+        <div className="wrap popups-wrap">
+          <div className="popups-head">
+            <p className="caption eyebrow">Chapter 7 · Find us</p>
+            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="popups-title">${next ? 'Find us at our next pop-up' : 'Next pop-up coming soon'}</span><//>
+          </div>
+          ${next ? html`
+            <article className="popup-card">
+              <span className="popup-badge">${popBadge(next, today)}</span>
+              <p className="popup-venue">${next.venue}</p>
+              <p className="popup-place">${next.place}</p>
+              <ul className="popup-meta">
+                <li><${D.Doodle} name="clock" size=${20} /><span><b>${next.days}</b><br />${next.time}</span></li>
+                <li><${D.Doodle} name="pin" size=${20} /><span>Look for the DAJU stall at <b>${next.venue}</b>, ${next.place}</span></li>
+              </ul>
+              <div className="popup-btns">
+                <${D.Button} variant="primary" size="lg" icon="pin" block=${true} href=${mapsUrl(next)} target="_blank" rel="noopener">Get directions<//>
+                <${D.Button} variant="secondary" block=${true} icon="bag" onClick=${p.onPreorder}>Pre-order for pickup at the stall<//>
+              </div>
+              <p className="popup-skip">Skip the queue: build your cup now and pick it up when you visit.</p>
+            </article>` : html`
+            <article className="popup-card is-empty">
+              <p className="popup-venue">We're planning the next one</p>
+              <p className="popup-place">Watch our IG Stories for the date and place.</p>
+            </article>`}
+          ${later.length ? html`
+            <div className="popup-later">
+              <p className="label">Also coming up</p>
+              <ul>${later.map(function (pu) { return html`<li key=${pu.start}><span className="popup-later-date">${pu.days}</span><span>${pu.venue}, ${pu.place} · ${pu.time}</span><a href=${mapsUrl(pu)} target="_blank" rel="noopener" className="label">Map</a></li>`; })}</ul>
+            </div>` : null}
+          <p className="popup-follow"><${D.Doodle} name="sparkle" size=${18} /> Never miss a pop-up: live location on Instagram [@handle] and <a href=${'https://wa.me/' + WA_NUMBER} target="_blank" rel="noopener">WhatsApp</a>.</p>
+        </div>
+      </section>`;
+  }
+
   function Footer() {
     return html`
       <footer className="foot" data-theme="forest" style=${{ background: 'var(--surface)', color: 'var(--text)' }}>
@@ -1051,6 +1106,7 @@
             onReview=${function () { setDrawer('bag'); }}
             onAddStudio=${function () { addItems(studioDrink, studioCups()); setDrawer('bag'); }}
             onCopy=${function () { copyText(orderMessage(pageOrder), function () { showToast('Ticket copied'); }, function () { showToast('Copy is blocked here. Open your bag to select the text.'); }); }} />
+          <${PopUps} onPreorder=${function () { scrollToId('studio'); }} />
         </main>
         <${Footer} />
         ${narrow ? html`<${TabBar} count=${bag.length} onBag=${function () { buzz(); setDrawer('bag'); }} />` : null}
