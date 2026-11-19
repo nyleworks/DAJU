@@ -251,8 +251,7 @@
           <div className="hero-copy">
             <div className="hero-doodles">
               <${D.SpeechBubble} size=${p.narrow ? 100 : 150} tilt=${-14}>something special, every week<//>
-              <span className="whisk" aria-hidden="true"><${D.Doodle} name="whisk" size=${p.narrow ? 70 : 92} className="draw" /></span>
-              <${D.Doodle} name="sparkle" size=${36} className="draw" />
+              <${HeroWhisk} size=${p.narrow ? 190 : 260} />
             </div>
             <${D.StickerHeadline} as="h1" size="xl">Matcha<br />of the week?<//>
             <div className="hero-actions">
@@ -273,6 +272,22 @@
       </section>`;
   }
 
+
+  /* Hero whisk with sparkles (line art from DAJU's own graphic) */
+  function HeroWhisk(p) {
+    return html`<svg className="hero-whisk" width=${p.size} viewBox="20 40 300 230" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M66 161Q66 178 83 178Q66 178 66 195Q66 178 49 178Q66 178 66 161Z" />
+      <path d="M53.5 156.3L48.5 147.7M78.5 156.3L83.5 147.7M42.5 186.6L33.1 190.0M88.7 188.6L97.7 192.8" />
+      <path d="M42.5 232.5L34.7 224.7M49.5 232.5L57.3 224.7M49.5 239.5L57.3 247.3M42.5 239.5L34.7 247.3" />
+      <path d="M264.5 184.5L257.4 177.4M271.5 184.5L278.6 177.4M271.5 191.5L278.6 198.6M264.5 191.5L257.4 198.6" />
+      <path d="M304 183Q304 196 317 196Q304 196 304 209Q304 196 291 196Q304 196 304 183Z" />
+      <g className="whisk"><g transform="translate(180 170) rotate(30)">
+        <rect x="-15" y="-112" width="30" height="58" rx="9" />
+        <path d="M-9 -104v38M-15 -54h30M-13 -54l-2 14h30l-2 -14" />
+        <path d="M-14.4 -40Q-53.1 18 -49.2 54Q-45.3 64 -35.4 58M-12.0 -40Q-44.3 18 -41.0 54Q-37.7 64 -29.5 58M-9.6 -40Q-35.4 18 -32.8 54Q-30.2 64 -23.6 58M-7.2 -40Q-26.6 18 -24.6 54Q-22.6 64 -17.7 58M-4.8 -40Q-17.7 18 -16.4 54Q-15.1 64 -11.8 58M-2.4 -40Q-8.9 18 -8.2 54Q-7.5 64 -5.9 58M0.0 -40Q0.0 18 0.0 54Q0.0 64 0.0 58M2.4 -40Q8.9 18 8.2 54Q7.5 64 5.9 58M4.8 -40Q17.7 18 16.4 54Q15.1 64 11.8 58M7.2 -40Q26.6 18 24.6 54Q22.6 64 17.7 58M9.6 -40Q35.4 18 32.8 54Q30.2 64 23.6 58M12.0 -40Q44.3 18 41.0 54Q37.7 64 29.5 58M14.4 -40Q53.1 18 49.2 54Q45.3 64 35.4 58" />
+      </g></g>
+    </svg>`;
+  }
   /* ---------- Ch.2 ---------- */
   var LAYERS = ['Clear cup & DA JU', 'Ice drops in', 'Matcha swirls up', 'Sea-salt foam', 'Bow & butterflies'];
   var PINS = [[26, 47], [73, 41], [70, 78]];
