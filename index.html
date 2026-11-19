@@ -1632,6 +1632,7 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
   var PINS = [[26, 47], [73, 41], [70, 78]];
   /* ---------- Matcha of the Week story (plays after the cup is built, inside the same pinned scroll) ---------- */
   var WEEKLY_PRICE = 'RM8.99';
+  var WA_NUMBER = '60185768476', WA_DISPLAY = '+60 18-576 8476';  /* DAJU WhatsApp Business */
   var BUILD_END = 0.24;                         /* share of the pinned scroll spent building the cup */
   var STORY = [
     { at: 0.34, kind: 'title' },
@@ -2052,7 +2053,7 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
             <a href="#order" className="label">How to Order</a>
             <a href="#top" className="label">Instagram [@handle]</a>
             <a href="#top" className="label">TikTok [@handle]</a>
-            <a href="#top" className="label">WhatsApp [number]</a>
+            <a href=${'https://wa.me/' + WA_NUMBER} target="_blank" rel="noopener" className="label">WhatsApp ${WA_DISPLAY}</a>
           </nav>
         </div>
         <p className="caption muted" style=${{ maxWidth: 1200, margin: '32px auto 0' }}>DAJU Matcha · pop-up · Pick Up, Grab Express & COD to KK, Penampang, Putatan, Kepayan</p>
@@ -2170,12 +2171,12 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
     var text = orderMessage(p.order);
     return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} title="Your order ticket" step="Step 3 of 3"
       footer=${html`<div className="drawer-stack" style=${{ gap: 10 }}>
-        <${D.Button} variant="primary" size="lg" icon="bubble" block=${true} href=${'https://wa.me/?text=' + encodeURIComponent(text)} target="_blank" rel="noopener">Send via WhatsApp<//>
+        <${D.Button} variant="primary" size="lg" icon="bubble" block=${true} href=${'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(text)} target="_blank" rel="noopener">Send via WhatsApp<//>
         <${D.Button} variant="sticker" block=${true} icon="sparkle" disabled=${busy} onClick=${function () { if (busy) return; setBusy(true); shareTicketImage(p.order, text, p.toast).then(function () { setBusy(false); }); }}>${busy ? 'Making your ticket image…' : 'Share ticket as image'}<//>
         <${D.Button} variant="secondary" block=${true} onClick=${function () { copyText(text, function () { p.toast('Ticket copied'); }, function () { setRaw(true); }); }}>Copy ticket text<//>
         <${D.Button} variant="ghost" block=${true} onClick=${p.onBack}>Edit details<//></div>`}>
       <div className="ticket-center"><${D.OrderTicket} ...${p.order} /></div>
-      <p className="fine">Send via WhatsApp opens the chat with this ticket typed in. Prefer a picture? Share ticket as image sends it as a PNG from your phone\'s share menu (pick WhatsApp, then the DAJU chat, [number]). We\'ll reply to confirm your slot.</p>
+      <p className="fine">Send via WhatsApp opens the chat with this ticket typed in. Prefer a picture? Share ticket as image sends it as a PNG from your phone\'s share menu (pick WhatsApp, then the DAJU chat, ${WA_DISPLAY}). We\'ll reply to confirm your slot.</p>
       ${showRaw ? html`<div style=${{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <label className="dj-field-label" htmlFor="raw-ticket">Ticket text (selected, copy it from here)</label>
         <textarea id="raw-ticket" ref=${ta} className="copy-fallback" readOnly=${true} value=${text}></textarea></div>` : null}
@@ -2387,7 +2388,7 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 
     return html`
       <div id="top">
-        <div className="preview-strip"><b>Website preview</b><span>Prices, social handles and the WhatsApp number are placeholders until the menu is final.</span></div>
+        <div className="preview-strip"><b>Website preview</b><span>Prices and social handles are placeholders until the menu is final.</span></div>
         <${D.NavBar} className="nav-centered" bagCount=${bag.length} onBag=${function () { setDrawer('bag'); }} />
         <main>
           <${Hero} narrow=${narrow} heroRef=${heroRef} onCustomize=${function (m) { setCustItem(m); setDrawer('custom'); }} />
