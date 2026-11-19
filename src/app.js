@@ -263,7 +263,7 @@
             <p className="flavor-script" aria-hidden="true">Blue Sea Salt</p>
             <div className="hero-photo">
               <img className="hero-cutout" src="blue-sea-salt-cutout.png" width="433" height="521" alt=${PHOTO_ALT} />
-              <${D.SpeechBubble} className="hero-bubble" size=${p.narrow ? 112 : 150} tilt=${8}>One week. One matcha. A little surprise<//>
+              <${D.SpeechBubble} className="hero-bubble" size=${p.narrow ? 100 : 150} tilt=${8}>One week. One matcha. A little surprise<//>
             </div>
             <div style=${{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
               <${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink">Matcha of the Week<//>
