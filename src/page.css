@@ -94,7 +94,10 @@ button.step:focus-visible { outline: 2px solid transparent; box-shadow: var(--fo
 @media (prefers-reduced-motion: no-preference) {
   .assembly .dj-cup-ice rect, .assembly .dj-cup-foam, .assembly .dj-cup-matcha, .assembly .dj-cup-milk, .assembly .dj-cup-swirl, .assembly .dj-cup-bow, .assembly .dj-cup-fly { transform-box: fill-box; transform-origin: 50% 50%; animation: layerIn .6s cubic-bezier(.2,.9,.3,1.2) both; }
   .assembly .dj-cup-matcha, .assembly .dj-cup-milk { animation-name: swirlUp; }
+  /* Safari: a CSS transform animation replaces an SVG element's own transform attribute, which threw the bow and butterflies into the top-left corner. These parts fade in instead. */
+  .assembly .dj-cup-bow, .assembly .dj-cup-fly, .assembly .dj-cup-ice [transform], .assembly .dj-cup-bow [transform] { animation-name: layerFade; }
 }
+@keyframes layerFade { from { opacity: 0; } }
 @keyframes layerIn { from { opacity: 0; transform: translateY(-18px) scale(.8); } }
 @keyframes swirlUp { from { opacity: 0; transform: translateY(40px); } }
 .pin { position: absolute; width: 48px; height: 48px; margin: -24px 0 0 -24px; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
