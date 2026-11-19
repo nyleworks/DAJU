@@ -462,7 +462,7 @@
         <div className="wrap menu-head">
           <div>
             <p className="caption eyebrow">Chapter 3 · The DAJU Collection</p>
-            <h2 id="menu-title" className="editorial-lg p0" style=${{ textTransform: 'uppercase', color: 'var(--heading)' }}>Collection menu</h2>
+            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="menu-title">Collection menu</span><//>
             <p className="body p0 muted" style=${{ maxWidth: 480 }}>Four matchas and two coffees, all whisked or pulled to order, plus a Matcha of the Week.</p>
             <div className="menu-tabs" role="tablist" aria-label="Menu category">
               ${CATS.map(function (c) {
