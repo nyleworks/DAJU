@@ -597,8 +597,8 @@
       <section id="order" className="band" data-theme="forest" aria-labelledby="order-title">
         <div className="route-wrap">
           <div className="route-head">
-            <${D.Wordmark} size="md" />
-            <h2 id="order-title" className="editorial-lg p0" style=${{ marginTop: 12, textTransform: 'uppercase', color: 'var(--heading)' }}>How to order</h2>
+            <p className="caption eyebrow">Chapter 5 · Get it to you</p>
+            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="order-title">How to order</span><//>
             <${D.Doodle} name="sprig" size=${40} />
             <p className="caption p0 muted" style=${{ textTransform: 'uppercase' }}>${details ? 'Step 2 of 2 · Your details' : 'Step 1 of 2 · Pick a method'}</p>
           </div>
