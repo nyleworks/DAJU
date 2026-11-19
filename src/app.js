@@ -383,7 +383,6 @@
         <div className="assembly-stick" ref=${p.stickRef}>
           <div className="wrap assembly-grid">
             <div className="assembly-title">
-              <p className="caption eyebrow">Chapter 2 · Living cup assembly</p>
               <${D.StickerHeadline} size="lg" className="chapter-title"><span id="assembly-title">Watch it come together</span><//>
             </div>
             <div className="assembly-stage" ref=${stage}>
@@ -476,9 +475,8 @@
       <section id="menu" className="band menu" aria-labelledby="menu-title">
         <div className="wrap menu-head">
           <div>
-            <p className="caption eyebrow">Chapter 3 · The DAJU Collection</p>
             <${D.StickerHeadline} size="lg" className="chapter-title"><span id="menu-title">Collection menu</span><//>
-            <p className="body p0 muted" style=${{ maxWidth: 480 }}>Four matchas and two coffees, all whisked or pulled to order, plus a Matcha of the Week.</p>
+            <p className="body p0 muted" style=${{ maxWidth: 480 }}>One week. One matcha. A little surprise</p>
             <div className="menu-tabs" role="tablist" aria-label="Menu category">
               ${CATS.map(function (c) {
                 var n = MENU.filter(function (m) { return m.cat === c; }).length;
@@ -520,7 +518,6 @@
     var st = p.studio, narrow = p.narrow, each = st.qty > 1 && st.mode === 'each';
     var c = each ? st.cups[st.active] : st.cups[0];
     var head = html`<div className="studio-head">
-      <p className="caption eyebrow">Chapter 4 · Cup studio</p>
       <${D.StickerHeadline} size="lg" className="chapter-title"><span id="studio-title">Build your cup</span><//>
     </div>`;
     var caption = 'Ice ' + c.ice.toLowerCase() + ' · sweetness ' + c.sweet.toLowerCase();
@@ -612,7 +609,6 @@
       <section id="order" className="band" data-theme="forest" aria-labelledby="order-title">
         <div className="route-wrap">
           <div className="route-head">
-            <p className="caption eyebrow">Chapter 5 · Get it to you</p>
             <${D.StickerHeadline} size="lg" className="chapter-title"><span id="order-title">How to order</span><//>
             <${D.Doodle} name="sprig" size=${40} />
             <p className="caption p0 muted" style=${{ textTransform: 'uppercase' }}>${details ? 'Step 2 of 2 · Your details' : 'Step 1 of 2 · Pick a method'}</p>
@@ -678,10 +674,7 @@
       <section id="ticket" className="band" aria-labelledby="ticket-title">
         <div className="wrap signoff">
           <div className="signoff-copy">
-            <p className="caption eyebrow">Chapter 6 · Your ticket</p>
             <${D.StickerHeadline} size="lg" className="chapter-title"><span id="ticket-title">Ready when you are</span><//>
-            <p className="body-lg p0 muted">Your cup, your slot and your subtotal on one ticket. Send it to us on WhatsApp in one tap, and we'll confirm and start whisking.</p>
-            <p className="editorial-motto p0" style=${{ marginTop: 8, color: 'var(--heading)' }}>Freshly Made. Made For You.</p>
           </div>
           <div className="signoff-ticket">
             <p className=${'ticket-state' + (p.complete ? ' is-ok' : '')} role="status">
@@ -723,7 +716,6 @@
       <section id="popups" className="band popups" aria-labelledby="popups-title">
         <div className="wrap popups-wrap">
           <div className="popups-head">
-            <p className="caption eyebrow">Chapter 7 · Find us</p>
             <${D.StickerHeadline} size="lg" className="chapter-title"><span id="popups-title">${next ? 'Find us at our next pop-up' : 'Next pop-up coming soon'}</span><//>
           </div>
           ${next ? html`
@@ -750,7 +742,6 @@
               <p className="label">Also coming up</p>
               <ul>${later.map(function (pu) { return html`<li key=${pu.start}><span className="popup-later-date">${pu.days}</span><span>${pu.venue}, ${pu.place} · ${pu.time}</span><a href=${mapsUrl(pu)} target="_blank" rel="noopener" className="label">Map</a></li>`; })}</ul>
             </div>` : null}
-          <p className="popup-follow"><${D.Doodle} name="sparkle" size=${18} /> Never miss a pop-up: live location on Instagram [@handle] and <a href=${'https://wa.me/' + WA_NUMBER} target="_blank" rel="noopener">WhatsApp</a>.</p>
         </div>
       </section>`;
   }
