@@ -684,3 +684,15 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 .popup-follow svg { color: var(--active); }
 .popup-follow a { color: var(--heading); font-weight: 700; }
 @media (min-width: 721px) { .popup-venue { font-size: 44px; } .popup-card { padding: 40px 32px 26px; } }
+
+/* How to order: pink as the tertiary colour (step numbers, weekend tags, icons on the route, the sprig) */
+#order { --pink: var(--color-ribbon); }
+#order .route-head .dj-doodle, #order .route-head > svg { color: var(--pink); }
+#order .route-head .caption { color: var(--pink); opacity: .9; }
+#order .dj-chan-step { background: var(--pink); color: var(--color-forest); }
+#order .dj-chan-col:not(.is-active) .dj-chan-badge { background: var(--pink); color: var(--color-forest); }
+#order .station-icon { color: var(--pink); }
+#order .station.is-chosen .station-icon, #order .rider { background: var(--pink); color: var(--color-forest); }
+#order .dj-chan.is-selected { border-color: var(--pink); box-shadow: 4px 4px 0 var(--pink); }
+#order .chip-btn[aria-pressed="true"] { background: var(--pink); border-color: var(--pink); color: var(--color-forest); }
+#order .details-form .eyebrow { color: var(--pink); }
