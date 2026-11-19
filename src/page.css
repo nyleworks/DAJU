@@ -696,3 +696,15 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 #order .dj-chan.is-selected { border-color: var(--pink); box-shadow: 4px 4px 0 var(--pink); }
 #order .chip-btn[aria-pressed="true"] { background: var(--pink); border-color: var(--pink); color: var(--color-forest); }
 #order .details-form .eyebrow { color: var(--pink); }
+
+/* Pink "add to bag" buttons (forest text keeps it readable on the light pink) */
+.dj-btn.btn-pink { background: var(--color-ribbon); color: var(--color-forest); border-color: var(--color-forest); }
+.dj-btn.btn-pink:hover { background: #eea3b2; }
+
+/* Checkout drawers: pink as the tertiary colour */
+.checkout-drawer .dj-drawer-head { border-bottom: 3px solid var(--color-ribbon); }
+.checkout-drawer .dj-drawer-step { display: inline-block; margin-bottom: 6px; padding: 2px 10px; border-radius: 999px; background: var(--color-ribbon); color: var(--color-forest); }
+.checkout-drawer .bag-item { border-left: 4px solid var(--color-ribbon); }
+.checkout-drawer .method-summary-icon { background: var(--color-ribbon); color: var(--color-forest); }
+.checkout-drawer .dj-drawer-foot { border-top: 2px dashed var(--color-ribbon); }
+.checkout-drawer .sum-row span:last-child { padding: 0 8px; border-radius: 6px; background: rgb(244 182 194 / .45); }

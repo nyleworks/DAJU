@@ -576,7 +576,7 @@
             <${D.ChoicePills} label="Cup flair" options=${FLAIR_OPTS} value=${c.flair} className="mode-pills" onChange=${function (v) { p.setCup({ flair: v }); }} />
             ${each && st.active < st.qty - 1 ? html`<${D.Button} variant="secondary" onClick=${function () { buzz(); p.setActive(st.active + 1); }}>Next: cup ${st.active + 2}<//>` : null}
             <div className="studio-add">
-              <${D.Button} variant="primary" size="lg" icon="bag" onClick=${p.onAdd}>${st.qty === 1 ? 'Add to bag' : 'Add ' + st.qty + ' cups to bag'}<//>
+              <${D.Button} variant="primary" className="btn-pink" size="lg" icon="bag" onClick=${p.onAdd}>${st.qty === 1 ? 'Add to bag' : 'Add ' + st.qty + ' cups to bag'}<//>
               <span className="label muted">${lineTotal} · ${p.bagCount ? p.bagCount + (p.bagCount === 1 ? ' cup' : ' cups') + ' in your bag' : 'Your bag is empty'}</span>
             </div>
           </div>
@@ -675,7 +675,7 @@
             <div className="btns">
               ${p.hasBag
                 ? html`<${D.Button} variant="primary" size="lg" icon="bag" block=${true} onClick=${p.onReview}>Review & send order<//>`
-                : html`<${D.Button} variant="primary" size="lg" icon="bag" block=${true} onClick=${p.onAddStudio}>${p.studioQty > 1 ? 'Add these ' + p.studioQty + ' cups to bag' : 'Add this cup to bag'}<//>`}
+                : html`<${D.Button} variant="primary" className="btn-pink" size="lg" icon="bag" block=${true} onClick=${p.onAddStudio}>${p.studioQty > 1 ? 'Add these ' + p.studioQty + ' cups to bag' : 'Add this cup to bag'}<//>`}
               ${p.complete ? null : html`<${D.Button} variant="sticker" block=${true} icon="pin" onClick=${p.onDetails}>Add my details<//>`}
               ${p.complete ? html`<${D.Button} variant="sticker" block=${true} icon="sparkle" disabled=${busy} onClick=${function () { if (busy) return; setBusy(true); shareTicketImage(p.order, orderMessage(p.order), p.toast).then(function () { setBusy(false); }); }}>${busy ? 'Making your ticket image…' : 'Share ticket as image'}<//>` : null}
               <${D.Button} variant="secondary" block=${true} onClick=${p.onCopy}>Copy ticket text<//>
@@ -769,7 +769,7 @@
     if (!it) return null;
     function up(o) { set(Object.assign({}, c, o)); }
     return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} title="Customize your cup" step=${it.name}
-      footer=${html`<${D.Button} variant="primary" size="lg" icon="bag" block=${true} onClick=${function () { p.onAdd(it, c); }}>Add to bag · ${priceText(it.price)}<//>`}>
+      footer=${html`<${D.Button} variant="primary" className="btn-pink" size="lg" icon="bag" block=${true} onClick=${function () { p.onAdd(it, c); }}>Add to bag · ${priceText(it.price)}<//>`}>
       <div className="custom-cup"><${D.CupPreview} width=${p.side === "bottom" ? 130 : 170} name=${c.name || 'DA JU'} charm=${c.flair} className=${cupClass(it.id)} alt=${'Illustrated ' + it.name + ' with "' + (c.name || 'DA JU') + '" written on the cup'} /></div>
       <${D.TextField} label="Name on the cup" hint="Up to 12 characters, written in marker." maxLength=${12} placeholder="DA JU" value=${c.name} onChange=${function (e) { up({ name: e.target.value.slice(0, 12) }); }} />
       <${D.ChoicePills} label="Ice" options=${TWO} value=${c.ice} className="full-seg" onChange=${function (v) { up({ ice: v }); }} />
@@ -780,7 +780,7 @@
 
   function BagDrawer(p) {
     var items = p.items;
-    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} title="Your order bag" step="Step 1 of 3"
+    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="Your order bag" step="Step 1 of 3"
       footer=${items.length ? html`<div className="drawer-stack" style=${{ gap: 12 }}>
         <div className="sum-row"><span>Estimated subtotal</span><span>${subtotalText(items)}</span></div>
         ${p.ready ? html`<div className="method-summary">
@@ -854,7 +854,7 @@
     var sched = D.schedule[f.mode][f.day];
     var slot = f.mode === 'PICK_UP' ? sched.location + ' · ' + sched.time : f.mode === 'GRAB_EXPRESS' ? sched.label + ' ' + sched.time : sched.time + ' · ' + sched.area.replace(/ \| /g, ', ');
     var now = p.now, weekdayMissed = f.day === 'weekday' && !isWeekend(now) && mins(now) >= 805 && f.mode !== 'COD';
-    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} title="How should we get it to you?" step="Step 2 of 3"
+    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="How should we get it to you?" step="Step 2 of 3"
       footer=${html`<div className="drawer-stack" style=${{ gap: 10 }}>
         ${tried && Object.keys(err).length ? html`<p className="fine" style=${{ color: 'var(--alert)', fontWeight: 600 }} role="alert">Fix the highlighted ${Object.keys(err).length === 1 ? 'field' : 'fields'} to see your ticket.</p>` : null}
         <${D.Button} variant="primary" size="lg" block=${true} disabled=${f.mode === 'COD' && f.zone === 'OTHER'} onClick=${p.onNext}>Review ticket<//>
@@ -870,7 +870,7 @@
     useEffect(function () { if (!p.open) setRaw(false); }, [p.open]);
     useEffect(function () { if (showRaw && ta.current) { ta.current.focus(); ta.current.select(); } }, [showRaw]);
     var text = orderMessage(p.order);
-    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} title="Your order ticket" step="Step 3 of 3"
+    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="Your order ticket" step="Step 3 of 3"
       footer=${html`<div className="drawer-stack" style=${{ gap: 10 }}>
         <${D.Button} variant="primary" size="lg" icon="bubble" block=${true} href=${'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(text)} target="_blank" rel="noopener">Send via WhatsApp<//>
         <${D.Button} variant="sticker" block=${true} icon="sparkle" disabled=${busy} onClick=${function () { if (busy) return; setBusy(true); shareTicketImage(p.order, text, p.toast).then(function () { setBusy(false); }); }}>${busy ? 'Making your ticket image…' : 'Share ticket as image'}<//>
