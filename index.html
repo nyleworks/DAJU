@@ -2121,7 +2121,7 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
                 <li><${D.Doodle} name="pin" size=${20} /><span>Look for the DAJU stall at <b>${next.venue}</b>, ${next.place}</span></li>
               </ul>
               <div className="popup-btns">
-                <${D.Button} variant="primary" size="lg" icon="pin" block=${true} href=${mapsUrl(next)} target="_blank" rel="noopener">Get directions<//>
+                <${D.Button} variant="primary" className="btn-pink" size="lg" icon="pin" block=${true} href=${mapsUrl(next)} target="_blank" rel="noopener">Get directions<//>
                 <${D.Button} variant="secondary" block=${true} icon="bag" onClick=${p.onPreorder}>Pre-order for pickup at the stall<//>
               </div>
               <p className="popup-skip">Skip the queue: build your cup now and pick it up when you visit.</p>
