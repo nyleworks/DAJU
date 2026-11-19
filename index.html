@@ -1101,22 +1101,6 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 /* Hero whisk graphic */
 .hero-whisk { display: block; height: auto; color: #c9dd7e; overflow: visible; }
 .hero-whisk .whisk { transform-box: view-box; transform-origin: 180px 90px; transform: translate(var(--wx, 0px), var(--wy, 0px)) rotate(calc(var(--wr, 0deg) * .3)); }
-/* Hero speech bubble: longer line, so a smaller script size keeps it inside the bubble */
-.hero-bubble .dj-bubble-text { font-size: 0.96em !important; max-width: 70%; margin-top: -14%; line-height: 1.1; }
-.hero-bubble { font-size: 14px; }
-@media (min-width: 721px) { .hero-bubble { font-size: 18px; } }
-/* Speech bubble sits at the top right of the cup photo */
-.hero-photo { position: relative; display: inline-block; }
-.hero-photo .hero-bubble { position: absolute; top: -30px; right: -62px; z-index: 2; }
-.hero-photo .hero-bubble .dj-bubble-text { margin-top: -12%; }
-.hero-bubble { font-size: 12.5px; }
-@media (min-width: 721px) { .hero-photo .hero-bubble { right: -128px; top: -40px; } .hero-bubble { font-size: 16px; } }
-/* Bubble clear of the cup: on phones the photo shifts left to make room beside it */
-.hero-photo { padding-right: 92px; }
-.hero-photo .hero-bubble { right: -6px; top: -26px; }
-.hero-cutout { width: min(240px, 60vw); }
-.hero-bubble { font-size: 11.5px; }
-@media (min-width: 721px) { .hero-photo { padding-right: 0; } .hero-photo .hero-bubble { right: -160px; top: -34px; } .hero-cutout { width: 300px; } .hero-bubble { font-size: 16px; } }
 
 </style>
 </head>
@@ -1696,10 +1680,7 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
           <div className="hero-cup">
             <p className="editorial-md p0" style=${{ textTransform: 'uppercase', color: 'var(--heading)', letterSpacing: '0.32em' }}>Matcha</p>
             <p className="flavor-script" aria-hidden="true">Blue Sea Salt</p>
-            <div className="hero-photo">
-              <img className="hero-cutout" src="blue-sea-salt-cutout.png" width="433" height="521" alt=${PHOTO_ALT} />
-              <${D.SpeechBubble} className="hero-bubble" size=${p.narrow ? 100 : 150} tilt=${8}>One week. One matcha. A little surprise<//>
-            </div>
+            <img className="hero-cutout" src="blue-sea-salt-cutout.png" width="433" height="521" alt=${PHOTO_ALT} />
             <div style=${{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
               <${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink">Matcha of the Week<//>
               <span className="time" style=${{ color: 'var(--heading)' }}>${priceText(WEEKLY.price)}</span>
