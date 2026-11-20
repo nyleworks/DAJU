@@ -261,7 +261,7 @@
           <div className="hero-cup">
             <p className="editorial-md p0" style=${{ textTransform: 'uppercase', color: 'var(--heading)', letterSpacing: '0.32em' }}>Matcha</p>
             <p className="flavor-script" aria-hidden="true">Blue Sea Salt</p>
-            <img className="hero-cutout" src="blue-sea-salt-cutout.png" width="433" height="521" alt=${PHOTO_ALT} />
+            <img className="hero-cutout" src="blue-sea-salt-cutout.webp" srcSet="blue-sea-salt-cutout-300.webp 300w, blue-sea-salt-cutout.webp 433w" sizes="(min-width: 721px) 300px, min(250px, 64vw)" width="433" height="521" fetchpriority="high" alt=${PHOTO_ALT} />
             <div style=${{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
               <${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink">Matcha of the Week<//>
             </div>
@@ -1190,6 +1190,35 @@
     setInterval(function () { if (!document.hidden && active <= 0) { active = 0; snapshot(); } }, 1500);
   }
 
-  ReactDOM.createRoot(document.getElementById('root')).render(html`<${App} />`);
-  if ('MutationObserver' in window && Element.prototype.animate) startFlip();
+  /* index.html may hold a pre-rendered first screen (see build.py). React replaces it; carry the
+     hero's entrance animations over at the same point so they do not restart. */
+  var rootEl = document.getElementById('root'), ANIM_SEL = '#drop .hero-cutout, #drop .draw path';
+  var carry = [];
+  function mount() {
+    if (rootEl.firstChild && rootEl.querySelectorAll) {
+      Array.prototype.forEach.call(rootEl.querySelectorAll(ANIM_SEL), function (el, i) {
+        var a = el.getAnimations ? el.getAnimations() : []; carry[i] = a.length ? a[0].currentTime : null;
+      });
+    }
+    var appRoot = ReactDOM.createRoot(rootEl);
+    ReactDOM.flushSync(function () { appRoot.render(html`<${App} />`); });
+    Array.prototype.forEach.call(rootEl.querySelectorAll(ANIM_SEL), function (el, i) {
+      var a = el.getAnimations ? el.getAnimations() : [];
+      if (a.length && carry[i] != null) a[0].currentTime = carry[i];
+    });
+    /* FLIP starts after the hand-over, so swapping out the snapshot does not count as new content */
+    if ('MutationObserver' in window && Element.prototype.animate) startFlip();
+  }
+  /* With a pre-rendered first screen, let it paint first, then hand over to React on the next frame. */
+  function afterPaint() { requestAnimationFrame(function () { requestAnimationFrame(function () { setTimeout(mount, 80); }); }); }
+  if (rootEl.firstChild && window.requestAnimationFrame) {
+    /* wait (at most 1.5s) for the first-screen fonts so the snapshot paints in its real fonts first */
+    var first = ['1em Sacramento', '1em Shrikhand', '1em "DM Sans"', '600 1em "Cormorant Garamond"'];
+    if (document.fonts && document.fonts.load) Promise.race([
+      Promise.all(first.map(function (f) { return document.fonts.load(f).catch(function () {}); })),
+      new Promise(function (r) { setTimeout(r, 1500); })
+    ]).then(afterPaint, afterPaint);
+    else afterPaint();
+  }
+  else mount();
 })();
