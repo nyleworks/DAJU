@@ -1,12 +1,72 @@
-import sys, re
-DS = sys.argv[1] if len(sys.argv) > 1 else 'design-system'
-tokens = open(DS + '/tokens.css').read()
-bcss = open(DS + '/components/bundle.css').read()
-bcss = re.sub(r'^@import url\([^)]*\);\s*', '', bcss)
-bjs = open(DS + '/components/bundle.js').read()
-page = open('src/page.css').read()
-app = open('src/app.js').read()
-out = f'''<!doctype html>
+"""Build index.html (and app.min.js) from src/, design-system/, fonts/ and vendor/.
+
+    python3 build.py            # rebuild, reuse the saved first-screen snapshot (src/shell-*.html)
+    python3 build.py --shell    # also re-take the snapshot (needs Node + Playwright, see tools/prerender.js)
+
+Speed notes (mobile Lighthouse):
+- Fonts are self-hosted (fonts/, src/fonts.css), so there is no render-blocking Google Fonts request.
+- React, ReactDOM and htm are served from this site (vendor/) in one deferred, minified file.
+- The first screen (nav + hero) is pre-rendered into the HTML so it paints before the JavaScript runs.
+- CSS and JS are minified with esbuild when it is installed (`npm i -g esbuild`); otherwise they are left as is.
+"""
+import hashlib, os, re, shutil, subprocess, sys
+
+DS = 'design-system'
+args = [a for a in sys.argv[1:] if not a.startswith('--')]
+if args:
+    DS = args[0]
+
+
+def read(p):
+    return open(p, encoding='utf-8').read()
+
+
+def esbuild(src, loader):
+    exe = shutil.which('esbuild')
+    if not exe:
+        return src
+    r = subprocess.run([exe, '--minify', '--loader=' + loader, '--log-level=error'] + (['--target=es2017'] if loader == 'js' else []),
+                       input=src.encode('utf-8'), capture_output=True)
+    if r.returncode != 0:
+        sys.stderr.write(r.stderr.decode('utf-8', 'replace'))
+        return src
+    return r.stdout.decode('utf-8')
+
+
+# ---------- CSS (inlined, minified) ----------
+tokens = read(DS + '/tokens.css')
+bcss = re.sub(r'^@import url\([^)]*\);\s*', '', read(DS + '/components/bundle.css'))
+css = esbuild('\n'.join([read('src/fonts.css'), tokens, bcss, read('src/page.css')]), 'css')
+
+# ---------- JS (one deferred, minified, same-origin file) ----------
+js = '\n;'.join([
+    read('vendor/react.production.min.js'),
+    read('vendor/react-dom.production.min.js'),
+    read('vendor/htm.umd.js'),
+    esbuild(read(DS + '/components/bundle.js'), 'js'),
+    esbuild(read('src/app.js'), 'js'),
+])
+open('app.min.js', 'w', encoding='utf-8').write(js)
+ver = hashlib.sha1(js.encode('utf-8')).hexdigest()[:10]
+
+# ---------- First-screen snapshot ----------
+def shell(name):
+    p = 'src/shell-' + name + '.html'
+    return read(p).strip() if os.path.exists(p) else ''
+
+
+def make_boot():
+    narrow, wide = shell('narrow'), shell('wide')
+    if not (narrow and wide):
+        return ''
+    # Pick the phone or desktop snapshot before first paint; React replaces it once app.min.js runs.
+    return ('<template id="shell-n">' + narrow + '</template><template id="shell-w">' + wide + '</template>\n'
+            '<script>(function(){var m=window.matchMedia&&matchMedia("(max-width: 720px)").matches,'
+            't=document.getElementById(m?"shell-n":"shell-w"),r=document.getElementById("root");'
+            'if(t&&r){r.appendChild(t.content.cloneNode(true));document.documentElement.classList.add("has-shell");}})();</script>')
+
+def page(boot):
+    return f'''<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -23,28 +83,24 @@ out = f'''<!doctype html>
 <meta property="og:image:alt" content="DAJU logo">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="og-image.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Courier+Prime:wght@400;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Permanent+Marker&family=Sacramento&family=Shrikhand&display=swap">
-<style>
-{tokens}
-{bcss}
-{page}
-</style>
+<link rel="icon" href="data:,">
+<link rel="preload" as="image" type="image/webp" fetchpriority="high" href="blue-sea-salt-cutout.webp" imagesrcset="blue-sea-salt-cutout-300.webp 300w, blue-sea-salt-cutout.webp 433w" imagesizes="(min-width: 721px) 300px, min(250px, 64vw)">
+<link rel="preload" href="fonts/sacramento.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/shrikhand.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/dm-sans.woff2" as="font" type="font/woff2" crossorigin>
+<script src="app.min.js?v={ver}" defer></script>
+<style>{css}</style>
 </head>
 <body>
 <div id="root"></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
-<script>
-{bjs}
-</script>
-<script>
-{app}
-</script>
+{boot}
 </body>
 </html>
 '''
-open('index.html', 'w').write(out)
-print(len(out))
+
+if '--shell' in sys.argv:
+    open('index.html', 'w', encoding='utf-8').write(page(''))  # snapshot is taken from a page without the old one
+    subprocess.run(['node', 'tools/prerender.js'], check=True)
+out = page(make_boot())
+open('index.html', 'w', encoding='utf-8').write(out)
+print('index.html', len(out), 'bytes; app.min.js', len(js), 'bytes')

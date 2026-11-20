@@ -8,11 +8,14 @@ Website for DAJU, a pop-up matcha bar in Kota Kinabalu, Sabah. It is a single st
 - `src/page.css` holds the page styles.
 - `design-system/` is the DAJU design system (tokens and components).
 
-After editing, rebuild `index.html`:
+After editing, rebuild `index.html` and `app.min.js`:
 
 ```
-python3 build.py
+python3 build.py           # normal rebuild
+python3 build.py --shell   # also re-take the first-screen snapshot (do this after changing the hero or top bar)
 ```
+
+For speed, the page loads fonts from `fonts/`, React from `vendor/` (bundled into one deferred `app.min.js`), and paints a snapshot of the top bar and hero (`src/shell-*.html`) before the JavaScript runs. `--shell` needs Node and Playwright; minifying needs `esbuild` (`npm i -g esbuild`), and the build still works without it, just unminified.
 
 ## Link previews
 

@@ -415,8 +415,8 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 .fold { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .32s cubic-bezier(.2,.8,.2,1), opacity .22s ease, margin-top .32s cubic-bezier(.2,.8,.2,1); }
 .fold.is-open { grid-template-rows: 1fr; opacity: 1; transition: grid-template-rows .32s cubic-bezier(.2,.8,.2,1), opacity .26s ease .06s, margin-top .32s cubic-bezier(.2,.8,.2,1); }
 .fold-inner { min-height: 0; overflow: hidden; }
-.fold.is-open > .fold-inner { animation: foldVisible 0s linear .32s forwards; }
-@keyframes foldVisible { to { overflow: visible; } }
+/* overflow flips to visible once the 320ms unfold ends (a discrete transition, so nothing animates on page load) */
+.fold.is-open > .fold-inner { overflow: visible; transition: overflow 0s linear .32s; transition-behavior: allow-discrete; }
 .route-wrap > .fold:not(.is-open) { margin-top: -24px; }
 .day-toggle-static { display: flex; justify-content: center; padding: 4px 0 2px; }
 .day-toggle-static .dj-field-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
@@ -447,7 +447,7 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 @media (hover: hover) { .station-bar:hover { border-color: var(--color-doodle); background: var(--surface-tint); } }
 @media (prefers-reduced-motion: reduce) {
   .fold, .fold.is-open, .station, .station .station-icon, .station-card, .chip-btn svg:last-child { transition: none; }
-  .fold.is-open > .fold-inner { animation: none; overflow: visible; }
+  .fold.is-open > .fold-inner { transition: none; overflow: visible; }
 }
 
 /* Open method: card minimizes to its header; schedule details fold away */
@@ -552,6 +552,7 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
   text-shadow: -1px -1px 0 var(--color-forest), 1px -1px 0 var(--color-forest), -1px 1px 0 var(--color-forest), 1px 1px 0 var(--color-forest), 0 -1.4px 0 var(--color-forest), 0 1.4px 0 var(--color-forest), -1.4px 0 0 var(--color-forest), 1.4px 0 0 var(--color-forest);
 }
 .drink-latte .dj-card-script { color: #e8c98a; }        /* warm cream, clearly yellower than coconut white */
+.drink-bss .dj-card-script { color: #5297d5; }        /* sea-salt blue, a shade deeper so it passes contrast on white */
 .drink-strawberry .dj-card-script { color: #e2577c; }   /* strawberry pink */
 .drink-coconut .dj-card-script { color: #ffffff; }      /* coconut white */
 .drink-coffee-salt .dj-card-script { color: #d9b98c; }  /* salted cream / caramel */
