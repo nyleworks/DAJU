@@ -299,8 +299,8 @@
     { at: 0.56, n: 2, head: 'And guess what?', body: 'price' , icon: 'sparkle' },
     { at: 0.67, n: 3, head: 'How do we pick?', body: 'Every week, we roll for your Matcha of the Week on our IG Stories.', icon: 'dice' }
   ];
-  var STORY_SPAN = 0.11, BOOM_AT = 0.8;
-  var STORY_EASE = 7, STORY_MAX_RATE = STORY_SPAN / 0.6;  /* each card gets at least ~0.6s on screen, however fast you scroll */
+  var STORY_SPAN = 0.11, BOOM_AT = 0.8, LAST_EXIT = 0.035;
+  var STORY_EASE = 7, STORY_MAX_RATE = STORY_SPAN / 1.2;  /* each card gets at least ~1.2s, however fast you scroll */
   function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
   function easeOut(x) { return 1 - Math.pow(1 - x, 3); }
   function Dice(p) {
@@ -361,7 +361,7 @@
         var dt = last.current ? Math.min(0.05, (now - last.current) / 1000) : 1 / 60; last.current = now;
         var d = goal.current - cur.current, ad = Math.abs(d);
         if (ad < 0.0004) { cur.current = goal.current; setPr(goal.current); raf.current = 0; return; }
-        cur.current += (d > 0 ? 1 : -1) * Math.min(ad, Math.min(ad * STORY_EASE, STORY_MAX_RATE) * dt);
+        cur.current += (d > 0 ? 1 : -1) * Math.min(ad, Math.max(0.06, Math.min(ad * STORY_EASE, STORY_MAX_RATE * (cur.current < STORY[0].at - 0.02 ? 4 : 1))) * dt);
         setPr(cur.current);
         raf.current = requestAnimationFrame(step);
       }
@@ -369,6 +369,7 @@
     }, [target, pinned, p.reduce]);
     useEffect(function () { return function () { if (raf.current) cancelAnimationFrame(raf.current); }; }, []);
     var story = pinned && settled && pr > BUILD_END + 0.06, boom = pinned && settled && pr >= BOOM_AT;
+    if (p.doneRef) p.doneRef.current = !pinned || boom;   /* the page holds the scroll here until the price tag has popped */
     var s = useState(-1), pin = s[0], setPin = s[1];
     var playS = useState(false), playing = playS[0], setPlaying = playS[1];
     var stage = useRef(null), chips = useRef(null), played = useRef(false);
@@ -431,8 +432,9 @@
                   ${STORY.map(function (it, i) {
                     var t = clamp01((pr - it.at) / STORY_SPAN), last = i === STORY.length - 1;
                     var e = easeOut(clamp01(t / 0.35)), x = clamp01((t - 0.72) / 0.28);
-                    if (last && pr < BOOM_AT) x = 0;
-                    if (last && pr >= BOOM_AT) x = 1;
+                    /* the last card leaves (and, scrolling back up, comes back) with the same motion as the others,
+                       in the short stretch just before the price tag, instead of snapping on and off */
+                    if (last) x = clamp01((pr - (BOOM_AT - LAST_EXIT)) / LAST_EXIT);
                     var op = e * (1 - x);
                     if (op <= 0.001) return null;
                     var st = { opacity: op, transform: 'translate(-50%, -50%) translateY(' + ((1 - e) * 36 - x * 80).toFixed(1) + 'px) scale(' + (0.12 + 0.88 * e + x * 0.06).toFixed(3) + ')' };
@@ -961,7 +963,7 @@
     var pinned = !reduce;  /* the cup stays centred and builds with the scroll on phones and desktop */
     var side = narrow ? 'bottom' : 'right';
 
-    var heroRef = useRef(null), secRef = useRef(null), stickRef = useRef(null), toastT = useRef(null), toastT2 = useRef(null), keyN = useRef(0);
+    var storyDone = useRef(false), heroRef = useRef(null), secRef = useRef(null), stickRef = useRef(null), toastT = useRef(null), toastT2 = useRef(null), keyN = useRef(0);
 
     useEffect(function () { var t = setInterval(function () { setNow(myt()); }, 30000); return function () { clearInterval(t); }; }, []);
     useEffect(function () { document.body.classList.toggle('is-locked', !!drawer); }, [drawer]);
@@ -981,18 +983,34 @@
           hero.style.setProperty('--wx', (Math.sin(a) * 14).toFixed(1) + 'px');
           hero.style.setProperty('--wy', (Math.sin(a * 2) * 8).toFixed(1) + 'px');
         }
-        var sec = secRef.current, st = stickRef.current;
+        var sec = secRef.current, st = stickRef.current, lastY = prevY; prevY = window.scrollY;
         if (pinned && sec && st) {
           var r = sec.getBoundingClientRect(), total = sec.offsetHeight - st.offsetHeight;
           var top0 = narrow ? 0 : 64, pr = Math.max(0, Math.min(1, (top0 - r.top) / Math.max(1, total)));
+          /* Hold the screen on this section until the Matcha of the Week story has played to the RM8.99 tag:
+             scrolling down stops at the tag's spot and the cards keep playing; scrolling up is always free. */
+          var hold = Math.ceil(window.scrollY + r.top - top0 + total * BOOM_AT) + 2;
+          holdY = storyDone.current ? -1 : hold;
+          if (holdY >= 0 && window.scrollY > holdY + 1 && r.top <= top0 + 1 && Date.now() - userAt < 1600 && lastY <= holdY + 2) { window.scrollTo({ top: holdY, behavior: 'instant' }); prevY = holdY; pr = BOOM_AT; }
           setProgress(pr);
           setLayer(Math.min(5, 1 + Math.floor((pr / BUILD_END) * 5.2)));
         }
       }
       function on() { if (!raf) raf = requestAnimationFrame(tick); }
+      /* while the story is holding, swallow downward wheel/touch scrolls so the page doesn't overshoot and snap back */
+      var holdY = -1, ty = 0, userAt = 0, prevY = window.scrollY;  /* only hold for the visitor's own scrolling, never for menu/tab jumps */
+      function holding() { return pinned && holdY >= 0 && !storyDone.current && Math.abs(window.scrollY - holdY) <= 2; }
+      function onKey(e) { if (/^(ArrowDown|PageDown|End| |Spacebar)$/.test(e.key)) userAt = Date.now(); }
+      function onWheel(e) { userAt = Date.now(); if (e.deltaY > 0 && holding()) e.preventDefault(); }
+      function onTouchStart(e) { ty = e.touches[0].clientY; }
+      function onTouchMove(e) { var y = e.touches[0].clientY, up = y > ty; ty = y; userAt = Date.now(); if (!up && holding()) e.preventDefault(); }
+      var poll = setInterval(function () { if (holdY >= 0 && storyDone.current) on(); }, 120);
+      window.addEventListener('wheel', onWheel, { passive: false }); window.addEventListener('keydown', onKey);
+      window.addEventListener('touchstart', onTouchStart, { passive: true });
+      window.addEventListener('touchmove', onTouchMove, { passive: false });
       window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', on);
       tick();
-      return function () { window.removeEventListener('scroll', on); window.removeEventListener('resize', on); if (raf) cancelAnimationFrame(raf); };
+      return function () { clearInterval(poll); window.removeEventListener('wheel', onWheel); window.removeEventListener('keydown', onKey); window.removeEventListener('touchstart', onTouchStart); window.removeEventListener('touchmove', onTouchMove); window.removeEventListener('scroll', on); window.removeEventListener('resize', on); if (raf) cancelAnimationFrame(raf); };
     }, [pinned, reduce, narrow]);
 
     function showToast(m) {
@@ -1120,7 +1138,7 @@
         <${D.NavBar} className="nav-centered" bagCount=${bag.length} onBag=${function () { setDrawer('bag'); }} />
         <main>
           <${Hero} narrow=${narrow} heroRef=${heroRef} onCustomize=${function (m) { setCustItem(m); setDrawer('custom'); }} />
-          <${Assembly} narrow=${narrow} reduce=${reduce} pinned=${pinned} layer=${layer} setLayer=${setLayer} progress=${progress} secRef=${secRef} stickRef=${stickRef} />
+          <${Assembly} narrow=${narrow} reduce=${reduce} pinned=${pinned} layer=${layer} setLayer=${setLayer} progress=${progress} doneRef=${storyDone} secRef=${secRef} stickRef=${stickRef} />
           <${Menu} narrow=${narrow} onCustomize=${function (m) { setCustItem(m); setDrawer('custom'); }} />
           <${Studio} narrow=${narrow} studio=${studio} setCup=${setCup} setQty=${setQty} setMode=${setStudioMode} setActive=${function (i) { setStudio(function (st) { return Object.assign({}, st, { active: i }); }); }} setDrink=${function (id) { setStudio(function (st) { return Object.assign({}, st, { drink: id }); }); }} burst=${burst} bagCount=${bag.length}
             onAdd=${function () { var l = studioCups(); addItems(studioDrink, l); showToast(l.length === 1 ? 'Added to your bag' : 'Added ' + l.length + ' cups to your bag'); }} />

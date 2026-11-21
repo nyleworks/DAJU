@@ -613,8 +613,8 @@ body.is-locked .toast.is-leaving { animation-name: toastOutUp; }
 .motw-price-inline { color: #d43d6a; font-weight: 800; }
 
 /* Price tag explosion */
-.motw-boom { position: absolute; left: 50%; top: 46%; width: 0; height: 0; opacity: 0; visibility: hidden; }
-.motw-boom.is-on { opacity: 1; visibility: visible; }
+.motw-boom { position: absolute; left: 50%; top: 46%; width: 0; height: 0; opacity: 0; visibility: hidden; transition: opacity .25s ease, visibility 0s linear .25s; }
+.motw-boom.is-on { opacity: 1; visibility: visible; transition: none; }
 .price-tag { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%) rotate(-6deg) scale(0); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 22px 34px 18px 46px; min-width: 220px; box-sizing: border-box; background: var(--color-ribbon, #f4b6c2); color: var(--color-forest); border: 3px solid var(--color-forest); border-radius: 14px 26px 26px 14px; box-shadow: 6px 6px 0 var(--color-forest); clip-path: polygon(14% 0, 100% 0, 100% 100%, 14% 100%, 0 50%); white-space: nowrap; }
 .price-tag-hole { position: absolute; left: 22px; top: 50%; width: 12px; height: 12px; margin-top: -6px; border-radius: 50%; background: var(--surface); border: 2.5px solid var(--color-forest); }
 .price-tag-kicker { font: 700 12px/1 var(--font-sans); letter-spacing: .16em; text-transform: uppercase; }
