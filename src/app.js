@@ -300,6 +300,7 @@
     { at: 0.67, n: 3, head: 'How do we pick?', body: 'Every week, we roll for your Matcha of the Week on our IG Stories.', icon: 'dice' }
   ];
   var STORY_SPAN = 0.11, BOOM_AT = 0.8;
+  var STORY_EASE = 7, STORY_MAX_RATE = STORY_SPAN / 0.6;  /* each card gets at least ~0.6s on screen, however fast you scroll */
   function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
   function easeOut(x) { return 1 - Math.pow(1 - x, 3); }
   function Dice(p) {
@@ -345,7 +346,29 @@
       var t = setTimeout(function () { setSettled(true); }, p.reduce ? 0 : 1100);
       return function () { clearTimeout(t); };
     }, [layer >= 5]);
-    var pr = pinned ? (settled ? p.progress : Math.min(p.progress, BUILD_END)) : 1, story = pinned && settled && pr > BUILD_END + 0.06, boom = pinned && settled && pr >= BOOM_AT;
+    /* The cards follow an eased copy of the scroll progress, never the raw value. If you scroll fast while the
+       cup is finishing, the story starts from the first card and plays through each one in turn instead of
+       jumping straight to wherever the scroll has already reached. */
+    var target = pinned ? (settled ? p.progress : Math.min(p.progress, BUILD_END)) : 1;
+    var dpS = useState(target), pr = dpS[0], setPr = dpS[1];
+    var cur = useRef(target), goal = useRef(target), raf = useRef(0), last = useRef(0);
+    goal.current = target;
+    useEffect(function () {
+      if (!pinned || p.reduce) { cur.current = target; setPr(target); return; }
+      if (raf.current) return;
+      last.current = 0;
+      function step(now) {
+        var dt = last.current ? Math.min(0.05, (now - last.current) / 1000) : 1 / 60; last.current = now;
+        var d = goal.current - cur.current, ad = Math.abs(d);
+        if (ad < 0.0004) { cur.current = goal.current; setPr(goal.current); raf.current = 0; return; }
+        cur.current += (d > 0 ? 1 : -1) * Math.min(ad, Math.min(ad * STORY_EASE, STORY_MAX_RATE) * dt);
+        setPr(cur.current);
+        raf.current = requestAnimationFrame(step);
+      }
+      raf.current = requestAnimationFrame(step);
+    }, [target, pinned, p.reduce]);
+    useEffect(function () { return function () { if (raf.current) cancelAnimationFrame(raf.current); }; }, []);
+    var story = pinned && settled && pr > BUILD_END + 0.06, boom = pinned && settled && pr >= BOOM_AT;
     var s = useState(-1), pin = s[0], setPin = s[1];
     var playS = useState(false), playing = playS[0], setPlaying = playS[1];
     var stage = useRef(null), chips = useRef(null), played = useRef(false);
