@@ -9,16 +9,19 @@
   var MENU = [
     { id: 'bss', cat: 'Matcha', name: 'Matcha Blue Sea Salt', flavor: 'Blue Sea Salt', note: 'Creamy matcha meets a hint of sea salt.', price: null, status: 'weekly', image: PHOTO,
       imageAlt: 'Matcha Blue Sea Salt in a clear cup with blue sea-salt foam, DA JU in marker and butterfly charms', tilt: -2 },
-    { id: 'latte', cat: 'Matcha', name: 'Matcha Latte', flavor: 'Latte', note: 'Earthy matcha, creamy comfort. Simple, smooth, soul-soothing.', price: null, status: 'available', photo: 'matcha-latte.jpg',
+    { id: 'latte', cat: 'Matcha', name: 'Matcha Latte', flavor: 'Latte', note: 'Earthy matcha, creamy comfort. Simple, smooth, soul-soothing.', price: null, status: 'available', image: 'matcha-latte.jpg',
       imageAlt: 'Matcha Latte: bright green matcha swirling down into cold milk and ice, DA JU printed on the cup', tilt: 1 },
-    { id: 'strawberry', cat: 'Matcha', name: 'Matcha Strawberry', flavor: 'Strawberry', note: 'Sweet strawberry, fruity and refreshing, under a layer of matcha.', price: null, status: 'available', photo: 'matcha-strawberry.jpg',
+    { id: 'strawberry', cat: 'Matcha', name: 'Matcha Strawberry', flavor: 'Strawberry', note: 'Sweet strawberry, fruity and refreshing, under a layer of matcha.', price: null, status: 'available', image: 'matcha-strawberry.jpg',
       imageAlt: 'Matcha Strawberry: green matcha on top of pink strawberry milk with a red strawberry layer at the bottom', tilt: -1 },
-    { id: 'coconut', cat: 'Matcha', name: 'Matcha Coconut', flavor: 'Coconut', note: 'Refreshing coconut, smooth matcha, perfect balance. Light and creamy.', price: null, status: 'available', photo: 'matcha-coconut.jpg',
+    { id: 'coconut', cat: 'Matcha', name: 'Matcha Coconut', flavor: 'Coconut', note: 'Refreshing coconut, smooth matcha, perfect balance. Light and creamy.', price: null, status: 'available', image: 'matcha-coconut.jpg',
       imageAlt: 'Matcha Coconut: a layer of deep green matcha floating over clear coconut water and ice', tilt: 2 },
-    { id: 'coffee-salt', cat: 'Coffee', name: 'Coffee Sea Salt', flavor: 'Sea Salt', note: 'Iced coffee under a thick salted cream cap, dusted with cinnamon.', price: null, status: 'available', photo: 'coffee-sea-salt.jpg',
+    { id: 'coffee-salt', cat: 'Coffee', name: 'Coffee Sea Salt', flavor: 'Sea Salt', note: 'Iced coffee under a thick salted cream cap, dusted with cinnamon.', price: null, status: 'available', image: 'coffee-sea-salt.jpg',
       imageAlt: 'Coffee Sea Salt: iced coffee topped with a thick sea-salt cream and a dusting of cinnamon, DA JU written in marker', tilt: -1 },
     { id: 'coffee-latte', cat: 'Coffee', name: 'Coffee Latte', flavor: 'Latte', note: 'Smooth coffee and cold milk over ice. An easy everyday cup.', price: null, status: 'available', tilt: 1 }
   ];
+  /* Social links: paste the real profile URLs here when they're ready (until then the footer shows plain text, not a dead link) */
+  var SOCIAL = { instagram: { url: '', handle: '[@handle]' }, tiktok: { url: '', handle: '[@handle]' } };
+  var MAX_CUPS = 10;   /* "Up to 10 per order" */
   var CATS = ['Matcha', 'Coffee'];
   var WEEKLY = MENU.filter(function (m) { return m.status === 'weekly'; })[0] || MENU[0];
   function drinkById(id) { return MENU.filter(function (m) { return m.id === id; })[0] || WEEKLY; }
@@ -44,22 +47,34 @@
   }
 
   /* ---------- Malaysia time (UTC+8) ---------- */
-  function myt() { var d = new Date(); return new Date(d.getTime() + (d.getTimezoneOffset() + 480) * 60000); }
-  function mins(d) { return d.getHours() * 60 + d.getMinutes(); }
-  function isWeekend(d) { var g = d.getDay(); return g === 0 || g === 6; }
-  function clock(d) { var h = d.getHours(), m = d.getMinutes(); return (h % 12 || 12) + ':' + (m < 10 ? '0' : '') + m + (h < 12 ? ' AM' : ' PM'); }
-  function statusNow(d) {
-    var m = mins(d);
-    if (isWeekend(d)) {
-      if (m >= 540 && m < 960) return { state: 'open', label: 'Grab Express pickups now', time: 'until 4:00 PM' };
-      return { state: 'soon', label: 'Weekend Pick Up: Maang Apartment', time: 'by arrangement' };
-    }
-    if (m < 750) return { state: 'open', label: 'Next Pick Up: Centre Point', time: '12:30 PM' };
-    if (m < 805) return { state: 'open', label: 'Pick Up open: Centre Point', time: 'until 1:25 PM' };
-    if (m < 1110) return { state: 'soon', label: 'Next: COD', time: 'after 6:30 PM' };
-    return { state: 'open', label: 'COD out now', time: 'KK · Penampang · Putatan · Kepayan' };
+  /* KK has no daylight saving: the time there is always UTC+8. myt() returns a Date shifted by 8 hours that is read
+     with the UTC getters below, so the visitor's own time zone (and its DST changes) never leaks in. */
+  function myt() { return new Date(Date.now() + 8 * 3600000); }
+  function mins(d) { return d.getUTCHours() * 60 + d.getUTCMinutes(); }
+  function dow(d) { return d.getUTCDay(); }
+  function isWeekend(d) { var g = dow(d); return g === 0 || g === 6; }
+  function clock(d) { var h = d.getUTCHours(), m = d.getUTCMinutes(); return (h % 12 || 12) + ':' + (m < 10 ? '0' : '') + m + (h < 12 ? ' AM' : ' PM'); }
+  /* Order cut-offs (minutes after midnight, KK time) */
+  var LUNCH_CUTOFF = 750;     /* weekday Centre Point / Grab pre-orders close when pickup starts, 12:30 PM */
+  var WEEKEND_GRAB_END = 960; /* weekend Grab Express dispatch ends 4:00 PM */
+  /* Each visitor gets their own reference (DJ-MMDD-XXXX); the 4-character code is random, without look-alike letters */
+  function refCode() {
+    var A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', out = '', r = null;
+    try { r = new Uint32Array(4); window.crypto.getRandomValues(r); } catch (e) { r = null; }
+    for (var i = 0; i < 4; i++) out += A[(r ? r[i] : Math.floor(Math.random() * 1e9)) % A.length];
+    return out;
   }
-  function orderRef(d) { var mm = d.getMonth() + 1, dd = d.getDate(); return 'DJ-' + (mm < 10 ? '0' : '') + mm + (dd < 10 ? '0' : '') + dd + '-001'; }
+  function orderRef(d, code) { var mm = d.getUTCMonth() + 1, dd = d.getUTCDate(); return 'DJ-' + (mm < 10 ? '0' : '') + mm + (dd < 10 ? '0' : '') + dd + '-' + code; }
+  /* #38: the bag and form survive a reload or an app switch, on this device only (sessionStorage, never sent anywhere) */
+  var SAVE_KEY = 'daju-order-v1';
+  function loadSaved() { try { var x = JSON.parse(window.sessionStorage.getItem(SAVE_KEY) || 'null'); return x && typeof x === 'object' ? x : {}; } catch (e) { return {}; } }
+  function storeSaved(o) { try { window.sessionStorage.setItem(SAVE_KEY, JSON.stringify(o)); } catch (e) {} }
+  /* #41: Malaysian mobile (01x…, 601x…, +601x…), or any other international number written with + and a country code */
+  function phoneOk(raw) {
+    var t = String(raw || '').trim(), d = t.replace(/\D/g, '');
+    if (/^(?:60|0)1\d{8,9}$/.test(d)) return true;
+    return /^\+/.test(t) && !/^60/.test(d) && d.length >= 8 && d.length <= 15;
+  }
 
   function useMedia(q) {
     var get = function () { try { return window.matchMedia(q).matches; } catch (e) { return false; } };
@@ -73,12 +88,33 @@
     return v;
   }
 
+  /* Arrow keys / Home / End move between tabs or radio buttons and focus the new one (roving tabindex) */
+  function tabKeys(e, cur, n, pick, sel) {
+    var k = e.key, i = cur;
+    if (k === 'ArrowRight' || k === 'ArrowDown') i = (cur + 1) % n;
+    else if (k === 'ArrowLeft' || k === 'ArrowUp') i = (cur - 1 + n) % n;
+    else if (k === 'Home') i = 0; else if (k === 'End') i = n - 1; else return;
+    e.preventDefault(); pick(i);
+    var box = e.currentTarget;
+    setTimeout(function () { var b = box.querySelectorAll(sel || '[role="tab"]')[i]; if (b) b.focus(); }, 0);
+  }
   function buzz() { try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {} }
 
-  function copyText(text, onDone, onFail) {
+  /* Old-style copy through a hidden textarea: works in Instagram/TikTok in-app browsers that have no clipboard API */
+  function legacyCopy(text) {
     try {
-      navigator.clipboard.writeText(text).then(onDone, onFail);
-    } catch (e) { onFail(); }
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;';
+      document.body.appendChild(ta); ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+      var ok = document.execCommand('copy'); ta.remove(); return !!ok;
+    } catch (e) { return false; }
+  }
+  function copyText(text, onDone, onFail) {
+    function fallback() { if (legacyCopy(text)) onDone(); else onFail(); }
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext !== false) navigator.clipboard.writeText(text).then(onDone, fallback);
+      else fallback();
+    } catch (e) { fallback(); }
   }
 
 
@@ -99,10 +135,27 @@
     var S = 2, W = 400, PAD = 28, IN = W - PAD * 2, KEYW = 84;
     var cv = document.createElement('canvas'), ctx = cv.getContext('2d');
     function font(f) { ctx.font = f; }
+    /* Wraps on spaces, keeps the visitor's own line breaks, and splits anything too long for a line (a pasted
+       Maps link, say) at the character level so nothing runs off the ticket */
     function wrap(text, maxW) {
-      var words = String(text).split(' '), lines = [], cur = '';
-      words.forEach(function (w) { var t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; });
-      if (cur) lines.push(cur); return lines;
+      var lines = [];
+      String(text).split(/\r?\n/).forEach(function (para) {
+        var cur = '';
+        para.split(/\s+/).filter(Boolean).forEach(function (w) {
+          if (ctx.measureText(w).width > maxW) {
+            if (cur) { lines.push(cur); cur = ''; }
+            while (w.length > 1 && ctx.measureText(w).width > maxW) {
+              var n = 1; while (n < w.length && ctx.measureText(w.slice(0, n + 1)).width <= maxW) n++;
+              lines.push(w.slice(0, n)); w = w.slice(n);
+            }
+          }
+          var t = cur ? cur + ' ' + w : w;
+          if (cur && ctx.measureText(t).width > maxW) { lines.push(cur); cur = w; } else cur = t;
+        });
+        lines.push(cur);
+      });
+      while (lines.length > 1 && !lines[lines.length - 1]) lines.pop();
+      return lines;
     }
     function layout(draw) {
       var y = 34;
@@ -121,8 +174,7 @@
       rows.forEach(function (r) {
         if (!r[1]) return;
         font('400 14px ' + MONO); txt(r[0], PAD, y + 11, C.muted);
-        font('700 14px ' + MONO); wrap(r[1], IN - KEYW).forEach(function (ln, i) { txt(ln, PAD + KEYW, y + 11 + i * 21, C.ink); y += i ? 21 : 0; });
-        y += 21;
+        font('700 14px ' + MONO); wrap(r[1], IN - KEYW).forEach(function (ln) { txt(ln, PAD + KEYW, y + 11, C.ink); y += 21; });
       });
       y += 4; dash(y); y += 18;
       /* items */
@@ -130,8 +182,7 @@
         font('700 14px ' + MONO);
         var price = it.price || '', pw = price ? ctx.measureText(price).width + 10 : 0;
         if (price) txt(price, W - PAD, y + 11, C.ink, 'right');
-        wrap((it.qty || 1) + '× ' + it.name, IN - pw).forEach(function (ln, i) { txt(ln, PAD, y + 11 + i * 21, C.ink); y += i ? 21 : 0; });
-        y += 21;
+        wrap((it.qty || 1) + '× ' + it.name, IN - pw).forEach(function (ln) { txt(ln, PAD, y + 11, C.ink); y += 21; });
         font('400 13px ' + MONO);
         wrap('Ice ' + (it.ice || 'Normal') + ' · Sweetness ' + (it.sweetness || 'Normal') + (it.flair ? ' · ' + it.flair : ''), IN).forEach(function (ln) { txt(ln, PAD, y + 10, C.muted); y += 19; });
         if (it.cupName) { font('400 20px ' + MARK); txt(it.cupName, PAD, y + 18, C.ink); y += 26; }
@@ -187,23 +238,53 @@
     L.push('', '*Estimated subtotal:* ' + (o.subtotal || '') + (o.mode === 'GRAB_EXPRESS' ? ' (excl. Grab Express fee)' : ''));
     return L.join('\n');
   }
+  /* The ticket fonts are loaded before drawing (the canvas can't wait for them by itself) */
+  var TICKET_FONTS = ['400 14px "Courier Prime"', '700 14px "Courier Prime"', '700 30px "Cormorant Garamond"', 'italic 500 17px "Cormorant Garamond"', '400 20px "Permanent Marker"'];
+  function ticketFonts() {
+    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    return Promise.race([
+      Promise.all(TICKET_FONTS.map(function (f) { return document.fonts.load(f).catch(function () {}); })),
+      new Promise(function (r) { setTimeout(r, 2500); })
+    ]);
+  }
   function ticketBlob(o) {
-    var ready = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
-    return ready.then(function () {
+    return ticketFonts().then(function () {
       return new Promise(function (res, rej) { ticketCanvas(o).toBlob(function (b) { b ? res(b) : rej(new Error('no image')); }, 'image/png'); });
     });
+  }
+  /* The image is made ahead of time (as soon as the ticket is on screen), so a tap on Share can open the share sheet
+     straight away. iPhone Safari refuses to share when the tap is followed by a long wait. */
+  var ticketCache = { key: '', blob: null, job: null };
+  function ticketKey(o) { return JSON.stringify(o); }
+  function prepareTicket(o) {
+    var key = ticketKey(o);
+    if (ticketCache.key === key) return ticketCache.job;
+    ticketCache.key = key; ticketCache.blob = null;
+    var job = ticketBlob(o).then(function (b) { if (ticketCache.key === key) ticketCache.blob = b; return b; });
+    job.catch(function () { if (ticketCache.key === key) ticketCache.key = ''; });
+    ticketCache.job = job;
+    return job;
+  }
+  function usePreparedTicket(o, on) {
+    var key = ticketKey(o);
+    useEffect(function () {
+      if (!on) return;
+      var t = setTimeout(function () { prepareTicket(o); }, 350);
+      return function () { clearTimeout(t); };
+    }, [key, on]);
   }
   /* Phone share sheet (pick WhatsApp) when the browser allows it; otherwise save the PNG so it can be attached in the chat */
   function shareTicketImage(o, text, toast) {
     var name = 'DAJU-ticket-' + String(o.orderRef || 'order').replace(/[^\w-]/g, '') + '.png';
-    return ticketBlob(o).then(function (blob) {
+    var ready = ticketCache.key === ticketKey(o) && ticketCache.blob;
+    function go(blob) {
       var file = null;
       try { file = new File([blob], name, { type: 'image/png' }); } catch (e) {}
       var canShare = false;
-      try { canShare = !!(file && navigator.canShare && navigator.canShare({ files: [file] })); } catch (e) {}
-      var shared = canShare
-        ? navigator.share({ files: [file], text: text }).then(function () { return 'shared'; }, function (e) { return e && e.name === 'AbortError' ? 'cancelled' : 'failed'; })
-        : Promise.resolve('failed');
+      try { canShare = !!(file && navigator.share && navigator.canShare && navigator.canShare({ files: [file] })); } catch (e) {}
+      /* the image only: iPhone Safari often fails when files and text are shared together (the text goes by WhatsApp's own button) */
+      var shared = Promise.resolve('failed');
+      if (canShare) { try { shared = navigator.share({ files: [file] }).then(function () { return 'shared'; }, function (e) { return e && e.name === 'AbortError' ? 'cancelled' : 'failed'; }); } catch (e) {} }
       return shared.then(function (r) {
         if (r !== 'failed') return r;
         return saveBlob(blob, name).then(function (ok) {
@@ -212,7 +293,9 @@
           return ok ? 'saved' : 'failed';
         });
       });
-    }, function () { toast('Could not make the image. Use Copy ticket text instead'); return 'failed'; });
+    }
+    if (ready) return go(ready);   /* share is called inside the tap itself */
+    return prepareTicket(o).then(go, function () { toast('Could not make the image. Use Copy ticket text instead'); return 'failed'; });
   }
   function saveBlob(blob, name) {
     var viaClaude = (window.claude && window.claude.use) ? window.claude.use('downloads') : Promise.resolve(null);
@@ -221,7 +304,7 @@
       try {
         var url = URL.createObjectURL(blob), a = document.createElement('a');
         a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 60000);   /* iPhone keeps showing its download prompt for a while */
         return true;
       } catch (e) { return false; }
     });
@@ -237,8 +320,10 @@
   }
 
   function Toast(p) {
-    if (!p.msg) return null;
-    return html`<div className=${'toast' + (p.out ? ' is-leaving' : '')} role="status"><${D.Doodle} name="sparkle" size=${20} />${p.msg}</div>`;
+    return html`<${R.Fragment}>
+      <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">${p.msg}</div>
+      ${p.msg ? html`<div className=${'toast' + (p.out ? ' is-leaving' : '')} aria-hidden="true"><${D.Doodle} name="sparkle" size=${20} />${p.msg}</div>` : null}
+    <//>`;
   }
 
   /* ---------- Ch.1 ---------- */
@@ -261,7 +346,7 @@
           <div className="hero-cup">
             <p className="editorial-md p0" style=${{ textTransform: 'uppercase', color: 'var(--heading)', letterSpacing: '0.32em' }}>Matcha</p>
             <p className="flavor-script" aria-hidden="true">Blue Sea Salt</p>
-            <img className="hero-cutout" src="blue-sea-salt-cutout.webp" srcSet="blue-sea-salt-cutout-300.webp 300w, blue-sea-salt-cutout.webp 433w" sizes="(min-width: 721px) 300px, min(250px, 64vw)" width="433" height="521" fetchpriority="high" alt=${PHOTO_ALT} />
+            <img className="hero-cutout" src="blue-sea-salt-cutout.webp" srcSet="blue-sea-salt-cutout-300.webp 300w, blue-sea-salt-cutout.webp 433w" sizes="(min-width: 721px) 300px, (min-width: 391px) 250px, 64vw" width="433" height="521" fetchpriority="high" alt=${PHOTO_ALT} />
             <div style=${{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
               <${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink">Matcha of the Week<//>
             </div>
@@ -288,7 +373,6 @@
   }
   /* ---------- Ch.2 ---------- */
   var LAYERS = ['Clear cup & DA JU', 'Ice drops in', 'Matcha swirls up', 'Sea-salt foam', 'Bow & butterflies'];
-  var PINS = [[26, 47], [73, 41], [70, 78]];
   /* ---------- Matcha of the Week story (plays after the cup is built, inside the same pinned scroll) ---------- */
   var WEEKLY_PRICE = 'RM8.99';
   var WA_NUMBER = '60185768476', WA_DISPLAY = '+60 18-576 8476';  /* DAJU WhatsApp Business */
@@ -301,6 +385,11 @@
   ];
   var STORY_SPAN = 0.11, BOOM_AT = 0.8, LAST_EXIT = 0.035;
   var STORY_EASE = 7, STORY_MAX_RATE = STORY_SPAN / 1.2;  /* each card gets at least ~1.2s, however fast you scroll */
+  /* Swipe resting spots (share of the pinned scroll): one per cup layer, one per story card once it's fully in,
+     then the price tag (the last one, which can't be glided past) */
+  var STOP_AT = [0, 1, 2, 3, 4].map(function (k) { return (k + 0.5) * BUILD_END / 5.2; })
+    .concat(STORY.map(function (it) { return it.at + STORY_SPAN * 0.45; }))
+    .concat([BOOM_AT]);
   function clamp01(x) { return x < 0 ? 0 : x > 1 ? 1 : x; }
   function easeOut(x) { return 1 - Math.pow(1 - x, 3); }
   function Dice(p) {
@@ -402,6 +491,7 @@
     </ol>`;
     return html`
       <section id="assembly" className=${'assembly' + (pinned ? ' is-pinned' : '')} ref=${p.secRef} aria-labelledby="assembly-title">
+        ${pinned ? STOP_AT.map(function (_, k) { return html`<div key=${k} className=${'story-stop' + (k === STOP_AT.length - 1 ? ' is-tag' : '')} aria-hidden="true"></div>`; }) : null}
         <div className="assembly-stick" ref=${p.stickRef}>
           <div className="wrap assembly-grid">
             <div className="assembly-title">
@@ -409,24 +499,7 @@
             </div>
             <div className="assembly-stage" ref=${stage}>
               <div className="stage-inner">
-                <svg className="watercolor" viewBox="0 0 400 400" aria-hidden="true" focusable="false">
-                  <defs>
-                    <filter id="wc-bleed" x="-30%" y="-30%" width="160%" height="160%">
-                      <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="3" seed="7" result="n" />
-                      <feDisplacementMap in="SourceGraphic" in2="n" scale="38" xChannelSelector="R" yChannelSelector="G" result="d" />
-                      <feGaussianBlur in="d" stdDeviation="7" result="b" />
-                      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="grain" />
-                      <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -0.9 1" result="g" />
-                      <feComposite in="b" in2="g" operator="in" />
-                    </filter>
-                  </defs>
-                  <g filter="url(#wc-bleed)">
-                    <ellipse className="wc-a" cx="200" cy="215" rx="150" ry="135" />
-                    <ellipse className="wc-b" cx="150" cy="150" rx="95" ry="80" />
-                    <ellipse className="wc-c" cx="265" cy="275" rx="90" ry="70" />
-                    <ellipse className="wc-d" cx="255" cy="135" rx="55" ry="45" />
-                  </g>
-                </svg>
+                <img className="watercolor-img" src="watercolor.webp" alt="" width="648" height="624" loading="lazy" decoding="async" />
                 <div className=${'cup-wrap' + (story ? ' is-dim' : '')}><${D.CupPreview} width=${narrow ? 200 : 260} layers=${layer} name="DA JU" charm="both" alt=${'Illustrated Matcha Blue Sea Salt, layer ' + layer + ' of 5: ' + LAYERS[layer - 1]} /></div>
                 ${pinned ? html`<div className="motw-stack" aria-hidden="true">
                   ${STORY.map(function (it, i) {
@@ -468,17 +541,26 @@
     useEffect(function () { var el = deck.current; if (el) el.scrollTo({ left: 0, behavior: 'instant' }); setIdx(0); }, [cat]);
     useEffect(function () {
       var el = deck.current; if (!el) return;
+      /* Which card is "current": phones snap cards to the centre, desktop snaps them to the left edge. At either
+         end of the row the first/last card wins, so every dot can be reached. */
       function track() {
-        var kids = el.querySelectorAll('.deck-row > *'), mid = el.scrollLeft + el.clientWidth / 2, best = 0, bd = 1e9;
-        for (var i = 0; i < kids.length; i++) { var c = kids[i].offsetLeft + kids[i].offsetWidth / 2, d = Math.abs(c - mid); if (d < bd) { bd = d; best = i; } }
+        var kids = el.querySelectorAll('.deck-row > *'); if (!kids.length) return;
+        var max = el.scrollWidth - el.clientWidth, best = 0, bd = 1e9;
+        if (el.scrollLeft >= max - 2 && max > 0) { setIdx(kids.length - 1); return; }
+        var start = (getComputedStyle(kids[0]).scrollSnapAlign || '').indexOf('start') >= 0;
+        var pad = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0;
+        var ref = start ? el.scrollLeft + pad : el.scrollLeft + el.clientWidth / 2;
+        for (var i = 0; i < kids.length; i++) { var c = start ? kids[i].offsetLeft : kids[i].offsetLeft + kids[i].offsetWidth / 2, d = Math.abs(c - ref); if (d < bd) { bd = d; best = i; } }
         setIdx(best);
       }
+      track();
       el.addEventListener('scroll', track, { passive: true });
       return function () { el.removeEventListener('scroll', track); };
     }, []);
     function goTo(i) {
       var el = deck.current; if (!el) return; var k = el.querySelectorAll('.deck-row > *')[i]; if (!k) return;
-      el.scrollTo({ left: k.offsetLeft - (el.clientWidth - k.offsetWidth) / 2, behavior: 'smooth' });
+      var start = (getComputedStyle(k).scrollSnapAlign || '').indexOf('start') >= 0, pad = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0;
+      el.scrollTo({ left: start ? k.offsetLeft - pad : k.offsetLeft - (el.clientWidth - k.offsetWidth) / 2, behavior: 'smooth' });
     }
     useEffect(function () {
       var el = deck.current; if (!el) return;
@@ -500,10 +582,10 @@
           <div>
             <${D.StickerHeadline} size="lg" className="chapter-title"><span id="menu-title">Collection menu</span><//>
             <p className="body p0 muted" style=${{ maxWidth: 480 }}>One week. One matcha. A little surprise</p>
-            <div className="menu-tabs" role="tablist" aria-label="Menu category">
+            <div className="menu-tabs" role="tablist" aria-label="Menu category" onKeyDown=${function (e) { tabKeys(e, CATS.indexOf(cat), CATS.length, function (i) { setCat(CATS[i]); }); }}>
               ${CATS.map(function (c) {
                 var n = MENU.filter(function (m) { return m.cat === c; }).length;
-                return html`<button key=${c} type="button" role="tab" className=${'menu-tab' + (cat === c ? ' is-on' : '')} aria-selected=${cat === c} onClick=${function () { buzz(); setCat(c); }}>${c}<span className="menu-tab-n">${n}</span></button>`;
+                return html`<button key=${c} id=${'menu-tab-' + c} type="button" role="tab" tabIndex=${cat === c ? 0 : -1} aria-controls="menu-panel" className=${'menu-tab' + (cat === c ? ' is-on' : '')} aria-selected=${cat === c} onClick=${function () { buzz(); setCat(c); }}>${c}<span className="menu-tab-n">${n}</span></button>`;
               })}
             </div>
           </div>
@@ -513,12 +595,12 @@
             <button type="button" className="round-btn" aria-label="Scroll menu right" onClick=${function () { nudge(1); }}><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
           </div>`}
         </div>
-        <div className="deck" ref=${deck} tabIndex="0" aria-label=${cat + ' menu cards'}>
+        <div className="deck" id="menu-panel" role="tabpanel" aria-labelledby=${'menu-tab-' + cat} ref=${deck} tabIndex="0">
           <div className="deck-row">
             ${list.map(function (m) {
               var art = html`<${D.CupPreview} width=${150} name="DA JU" charm="butterfly" className=${cupClass(m.id)} alt=${'Illustrated ' + m.name + ' with DA JU in marker and butterfly charms'} />`;
               return html`<div key=${m.id} className=${'deck-card drink-' + m.id}><${D.ProductCard} name=${m.name} flavor=${m.flavor} note=${m.note} price=${priceText(m.price)} status=${m.status} category=${m.cat}
-                tilt=${m.tilt} suggestion=${m.suggestion} art=${art}
+                tilt=${m.tilt} suggestion=${m.suggestion} art=${art} image=${m.image} imageAlt=${m.imageAlt}
                 onAdd=${m.status === 'soldout' ? undefined : function () { p.onCustomize(m); }} /></div>`;
             })}
             ${cat === 'Matcha' ? html`<div className="coming-wrap"><div className="coming">
@@ -540,6 +622,8 @@
   function Studio(p) {
     var st = p.studio, narrow = p.narrow, each = st.qty > 1 && st.mode === 'each';
     var c = each ? st.cups[st.active] : st.cups[0];
+    var cupName = (c.name || '').trim() || 'DA JU';   /* a name of only spaces falls back to DA JU */
+    var room = Math.max(0, MAX_CUPS - (p.bagCount || 0)), maxQty = Math.max(1, Math.min(MAX_CUPS, room)), full = room <= 0;
     var head = html`<div className="studio-head">
       <${D.StickerHeadline} size="lg" className="chapter-title"><span id="studio-title">Build your cup</span><//>
     </div>`;
@@ -554,13 +638,13 @@
           <div className="studio-cup">
             <div className="studio-doodles" aria-hidden="true"><${D.Doodle} name="sparkle" size=${36} /><${D.Doodle} name="daisy" size=${36} /></div>
             <div className="cup-stack">
-              <${D.CupPreview} width=${narrow ? 86 : 260} name=${c.name || 'DA JU'} charm=${c.flair} className=${cupClass(drink.id)} alt=${'Illustrated ' + drink.name + ' with "' + (c.name || 'DA JU') + '" written on the cup'} caption=${narrow ? undefined : (st.qty > 1 ? reads.replace(' reads', '').replace(' read', '') + ' · ' : '') + caption} />
+              <${D.CupPreview} width=${narrow ? 86 : 260} name=${cupName} charm=${c.flair} className=${cupClass(drink.id)} alt=${'Illustrated ' + drink.name + ' with "' + cupName + '" written on the cup'} caption=${narrow ? undefined : (st.qty > 1 ? reads.replace(' reads', '').replace(' read', '') + ' · ' : '') + caption} />
               ${st.qty > 1 ? html`<span className="qty-badge" aria-hidden="true">×${st.qty}</span>` : null}
             </div>
             <div className="studio-cup-meta" aria-live="polite">
               <span className="studio-drink-name">${drink.name}</span>
               <span className="small">${reads}</span>
-              <span className="marker">${c.name || 'DA JU'}</span>
+              <span className="marker">${cupName}</span>
               <span className="small">${caption} · ${FLAIR[c.flair]}</span>
             </div>
             <${Burst} n=${p.burst} />
@@ -569,10 +653,13 @@
             ${narrow ? null : head}
             <div className="drink-pick-wrap">
               <p className="dj-field-label p0" id="drink-label">Drink</p>
-              <div className="drink-pick" role="radiogroup" aria-labelledby="drink-label">
+              <div className="drink-pick" role="radiogroup" aria-labelledby="drink-label" onKeyDown=${function (e) {
+                  var ok = MENU.filter(function (m) { return m.status !== 'soldout'; });
+                  tabKeys(e, Math.max(0, ok.indexOf(drink)), ok.length, function (i) { p.setDrink(ok[i].id); }, '[role="radio"]:not([disabled])');
+                }}>
                 ${MENU.map(function (m) {
                   var on = m.id === drink.id, sold = m.status === 'soldout';
-                  return html`<button key=${m.id} type="button" role="radio" aria-checked=${on} disabled=${sold} className=${'drink-chip' + (on ? ' is-on' : '')}
+                  return html`<button key=${m.id} type="button" role="radio" aria-checked=${on} tabIndex=${on ? 0 : -1} disabled=${sold} className=${'drink-chip' + (on ? ' is-on' : '')}
                     onClick=${function (e) { buzz(); p.setDrink(m.id); var b = e.currentTarget, row = b.parentNode; if (row.scrollWidth > row.clientWidth) row.scrollTo({ left: b.offsetLeft - 16, behavior: 'smooth' }); }}>
                     <span className="drink-thumb"><${DrinkThumb} drink=${m} size=${34} /></span>
                     <span className="drink-chip-text"><span className="drink-chip-name">${m.name}</span><span className="drink-chip-cat">${m.status === 'weekly' ? 'Matcha of the Week' : sold ? 'Sold out today' : m.cat}</span></span>
@@ -583,13 +670,13 @@
             <div className="qty-row">
               <div>
                 <p className="dj-field-label p0" id="qty-label">How many cups?</p>
-                <p className="fine">Up to 10 per order. ${st.qty > 1 ? 'All ' + st.qty + ' are ' + drink.name + '.' : drink.name + '.'}</p>
+                <p className="fine">Up to ${MAX_CUPS} per order${p.bagCount ? ' (' + (full ? 'your bag is full' : room + ' more fit in your bag') + ')' : ''}. ${st.qty > 1 ? 'All ' + st.qty + ' are ' + drink.name + '.' : drink.name + '.'}</p>
               </div>
               <div className="stepper" role="group" aria-labelledby="qty-label">
                 <button type="button" className="step-btn" aria-label="One cup fewer" disabled=${st.qty <= 1} onClick=${function () { p.setQty(st.qty - 1); }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" /></svg></button>
                 <output className="qty-num" aria-live="polite"><span className="qty-pop" key=${st.qty}>${st.qty}</span></output>
-                <button type="button" className="step-btn" aria-label="One cup more" disabled=${st.qty >= 10} onClick=${function () { p.setQty(st.qty + 1); }}>
+                <button type="button" className="step-btn" aria-label="One cup more" disabled=${st.qty >= maxQty} onClick=${function () { p.setQty(st.qty + 1); }}>
                   <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" /></svg></button>
               </div>
             </div>
@@ -600,7 +687,7 @@
                 <div className="cup-tabs" role="group" aria-label="Choose a cup to customize">
                   ${st.cups.map(function (cc, i) {
                     return html`<button key=${i} type="button" className=${'cup-tab' + (i === st.active ? ' is-on' : '')} aria-pressed=${i === st.active} onClick=${function () { buzz(); p.setActive(i); }}>
-                      <span className="cup-tab-n">Cup ${i + 1}</span><span className="cup-tab-name">${cc.name || 'DA JU'}</span></button>`;
+                      <span className="cup-tab-n">Cup ${i + 1}</span><span className="cup-tab-name">${(cc.name || '').trim() || 'DA JU'}</span></button>`;
                   })}
                 </div>
               </div>` : null}
@@ -611,7 +698,7 @@
             <${D.ChoicePills} label="Cup flair" options=${FLAIR_OPTS} value=${c.flair} className="mode-pills" onChange=${function (v) { p.setCup({ flair: v }); }} />
             ${each && st.active < st.qty - 1 ? html`<${D.Button} variant="secondary" onClick=${function () { buzz(); p.setActive(st.active + 1); }}>Next: cup ${st.active + 2}<//>` : null}
             <div className="studio-add">
-              <${D.Button} variant="primary" className="btn-pink" size="lg" icon="bag" onClick=${p.onAdd}>${st.qty === 1 ? 'Add to bag' : 'Add ' + st.qty + ' cups to bag'}<//>
+              <${D.Button} variant="primary" className="btn-pink" size="lg" icon="bag" disabled=${full} onClick=${p.onAdd}>${full ? 'Bag full (' + MAX_CUPS + ' cups max)' : st.qty === 1 ? 'Add to bag' : 'Add ' + Math.min(st.qty, room) + ' cups to bag'}<//>
               <span className="label muted">${lineTotal} · ${p.bagCount ? p.bagCount + (p.bagCount === 1 ? ' cup' : ' cups') + ' in your bag' : 'Your bag is empty'}</span>
             </div>
           </div>
@@ -621,7 +708,13 @@
 
   /* ---------- Ch.5 ---------- */
   function Fold(p) {
-    return html`<div className=${'fold' + (p.open ? ' is-open' : '') + (p.className ? ' ' + p.className : '')} inert=${p.open ? undefined : ''} aria-hidden=${p.open ? undefined : 'true'}>
+    var st = useState(!!p.open), settled = st[0], setSettled = st[1];
+    useEffect(function () {
+      if (!p.open) { setSettled(false); return; }
+      var t = setTimeout(function () { setSettled(true); }, 330);   /* the unfold takes 320ms */
+      return function () { clearTimeout(t); };
+    }, [p.open]);
+    return html`<div className=${'fold' + (p.open ? ' is-open' : '') + (p.open && settled ? ' is-settled' : '') + (p.className ? ' ' + p.className : '')} inert=${p.open ? undefined : ''} aria-hidden=${p.open ? undefined : 'true'}>
       <div className="fold-inner">${p.children}</div></div>`;
   }
   function Route(p) {
@@ -684,7 +777,7 @@
           <${Fold} open=${!details} className="no-flip">
             ${p.day === 'weekend'
               ? html`<${D.Notice} tone="availability" title="Weekend notes">Maang Apartment pickups are by arrangement, so add your preferred time at checkout. Weekend COD is based on order & availability, and we'll confirm before dispatch.<//>`
-              : html`<${D.Notice} tone="info" title="Order before the window closes">Pre-orders for the 12:30 PM – 1:25 PM Centre Point slot close before pickup starts. Miss it and Weekday COD (after 6:30 PM) is next.<//>`}
+              : html`<${D.Notice} tone="info" title="Order before the window closes">Pre-orders for the 12:30 PM – 1:25 PM Centre Point slot close at 12:30 PM, when pickup starts. Miss it and Weekday COD (after 6:30 PM) is next.<//>`}
           <//>
         </div>
       </section>`;
@@ -693,6 +786,7 @@
   /* ---------- Ch.6 ---------- */
   function SignOff(p) {
     var bz = useState(false), busy = bz[0], setBusy = bz[1];
+    usePreparedTicket(p.order, p.complete);
     return html`
       <section id="ticket" className="band" aria-labelledby="ticket-title">
         <div className="wrap signoff">
@@ -721,19 +815,30 @@
   var POPUPS = [
     { start: '2026-11-21', end: '2026-11-22', days: 'Sat 21 – Sun 22 Nov', time: '10 AM – 8 PM', venue: 'Palm Square', place: 'Centre Point, Kota Kinabalu' }
   ];
-  function ymd(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
-  function mapsUrl(pu) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(pu.venue + ', ' + pu.place); }
-  function popBadge(pu, today) {
-    if (pu.start <= today && today <= pu.end) return 'Happening now';
-    var days = Math.round((new Date(pu.start + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+  function ymd(d) { return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0'); }
+  var DAY_NAME = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  function parseHM(t) { var m = /(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i.exec(t || ''); return m ? (+m[1] % 12 + (/pm/i.test(m[3]) ? 12 : 0)) * 60 + (+m[2] || 0) : null; }
+  function popHours(pu) { var t = String(pu.time).split(/\s*[–-]\s*/); return { open: parseHM(t[0]), close: parseHM(t[1]), openText: (t[0] || '').trim() }; }
+  /* a pop-up is listed until it closes on its last day */
+  function popLive(pu, now) { var today = ymd(now), h = popHours(pu); return pu.end > today || (pu.end === today && (h.close == null || mins(now) < h.close)); }
+  function popBadge(pu, now) {
+    var today = ymd(now), m = mins(now), h = popHours(pu);
+    if (pu.start <= today && today <= pu.end) {
+      if (h.open != null && m < h.open) return 'Opens today at ' + h.openText;
+      if (h.close == null || m < h.close) return 'Happening now';
+      return 'Back tomorrow at ' + h.openText;
+    }
+    var days = Math.round((Date.parse(pu.start + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / 86400000);
+    var sd = new Date(pu.start + 'T00:00:00Z').getUTCDay(), weekendStart = sd === 0 || sd === 6;
     if (days === 1) return 'Tomorrow';
-    if (days <= 6) return 'This weekend';
+    if (days <= 6) return weekendStart && !isWeekend(now) ? 'This weekend' : 'This ' + DAY_NAME[sd];
     if (days <= 13) return 'Next week';
     return 'Coming up';
   }
+  function mapsUrl(pu) { return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(pu.venue + ', ' + pu.place); }
   function PopUps(p) {
-    var today = ymd(myt());
-    var list = POPUPS.filter(function (pu) { return pu.end >= today; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
+    var now = p.now;
+    var list = POPUPS.filter(function (pu) { return popLive(pu, now); }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
     var next = list[0], later = list.slice(1, 4);
     return html`
       <section id="popups" className="band popups" aria-labelledby="popups-title">
@@ -743,7 +848,7 @@
           </div>
           ${next ? html`
             <article className="popup-card">
-              <span className="popup-badge">${popBadge(next, today)}</span>
+              <span className="popup-badge">${popBadge(next, now)}</span>
               <p className="popup-venue">${next.venue}</p>
               <p className="popup-place">${next.place}</p>
               <ul className="popup-meta">
@@ -752,7 +857,7 @@
               </ul>
               <div className="popup-btns">
                 <${D.Button} variant="primary" className="btn-pink" size="lg" icon="pin" block=${true} href=${mapsUrl(next)} target="_blank" rel="noopener">Get directions<//>
-                <${D.Button} variant="secondary" block=${true} icon="bag" onClick=${p.onPreorder}>Pre-order for pickup at the stall<//>
+                <${D.Button} variant="secondary" block=${true} icon="bag" onClick=${function () { p.onPreorder(next); }}>Pre-order for pickup at the stall<//>
               </div>
               <p className="popup-skip">Skip the queue: build your cup now and pick it up when you visit.</p>
             </article>` : html`
@@ -780,9 +885,11 @@
           <nav aria-label="Footer">
             <a href="#drop" className="label">Weekly Drop</a>
             <a href="#menu" className="label">Matcha Menu</a>
+            <a href="#studio" className="label">Build your cup</a>
             <a href="#order" className="label">How to Order</a>
-            <a href="#top" className="label">Instagram [@handle]</a>
-            <a href="#top" className="label">TikTok [@handle]</a>
+            <a href="#popups" className="label">Pop-ups</a>
+            ${SOCIAL.instagram.url ? html`<a href=${SOCIAL.instagram.url} target="_blank" rel="noopener" className="label">Instagram ${SOCIAL.instagram.handle}</a>` : html`<span className="label foot-soon">Instagram ${SOCIAL.instagram.handle}</span>`}
+            ${SOCIAL.tiktok.url ? html`<a href=${SOCIAL.tiktok.url} target="_blank" rel="noopener" className="label">TikTok ${SOCIAL.tiktok.handle}</a>` : html`<span className="label foot-soon">TikTok ${SOCIAL.tiktok.handle}</span>`}
             <a href=${'https://wa.me/' + WA_NUMBER} target="_blank" rel="noopener" className="label">WhatsApp ${WA_DISPLAY}</a>
           </nav>
         </div>
@@ -794,13 +901,28 @@
   function CustomizeDrawer(p) {
     var it = p.item;
     var s = useState({ name: '', ice: 'Normal', sweet: 'Normal', flair: 'butterfly' }), c = s[0], set = s[1];
-    useEffect(function () { if (it) set({ name: '', ice: 'Normal', sweet: 'Normal', flair: it.charm || 'butterfly' }); }, [it && it.id, p.open]);
+    var qS = useState(1), qty = qS[0], setQty = qS[1];
+    var bS = useState(false), busy = bS[0], setBusy = bS[1];
+    useEffect(function () { if (it) set({ name: '', ice: 'Normal', sweet: 'Normal', flair: it.charm || 'butterfly' }); setQty(1); setBusy(false); }, [it && it.id, p.open]);
     if (!it) return null;
     function up(o) { set(Object.assign({}, c, o)); }
+    var room = Math.max(0, p.room == null ? MAX_CUPS : p.room), n = Math.max(1, Math.min(qty, room));
+    var cupName = (c.name || '').trim() || 'DA JU';
     return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} title="Customize your cup" step=${it.name}
-      footer=${html`<${D.Button} variant="primary" className="btn-pink" size="lg" icon="bag" block=${true} onClick=${function () { p.onAdd(it, c); }}>Add to bag · ${priceText(it.price)}<//>`}>
-      <div className="custom-cup"><${D.CupPreview} width=${p.side === "bottom" ? 130 : 170} name=${c.name || 'DA JU'} charm=${c.flair} className=${cupClass(it.id)} alt=${'Illustrated ' + it.name + ' with "' + (c.name || 'DA JU') + '" written on the cup'} /></div>
-      <${D.TextField} label="Name on the cup" hint="Up to 12 characters, written in marker." maxLength=${12} placeholder="DA JU" value=${c.name} onChange=${function (e) { up({ name: e.target.value.slice(0, 12) }); }} />
+      footer=${html`<${D.Button} variant="primary" className="btn-pink" size="lg" icon="bag" block=${true} disabled=${busy || !room}
+        onClick=${function () { if (busy || !room) return; setBusy(true); p.onAdd(it, c, n); }}>${!room ? 'Bag full (' + MAX_CUPS + ' cups max)' : (n > 1 ? 'Add ' + n + ' cups' : 'Add to bag') + ' · ' + (it.price == null ? priceText(null) + (n > 1 ? ' each' : '') : 'RM ' + (it.price * n).toFixed(2))}<//>`}>
+      <div className="custom-cup"><${D.CupPreview} width=${p.side === "bottom" ? 130 : 170} name=${cupName} charm=${c.flair} className=${cupClass(it.id)} alt=${'Illustrated ' + it.name + ' with "' + cupName + '" written on the cup'} /></div>
+      <div className="custom-qty">
+        <p className="dj-field-label p0" id="custom-qty-label">How many cups?</p>
+        <div className="stepper" role="group" aria-labelledby="custom-qty-label">
+          <button type="button" className="step-btn" aria-label="One cup fewer" disabled=${n <= 1} onClick=${function () { setQty(n - 1); }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" /></svg></button>
+          <output className="qty-num" aria-live="polite"><span className="qty-pop" key=${n}>${n}</span></output>
+          <button type="button" className="step-btn" aria-label="One cup more" disabled=${n >= room} onClick=${function () { setQty(n + 1); }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" /></svg></button>
+        </div>
+      </div>
+      <${D.TextField} label=${n > 1 ? 'Name on every cup' : 'Name on the cup'} hint="Up to 12 characters, written in marker." maxLength=${12} placeholder="DA JU" value=${c.name} autoComplete="off" onChange=${function (e) { up({ name: e.target.value.slice(0, 12) }); }} />
       <${D.ChoicePills} label="Ice" options=${TWO} value=${c.ice} className="full-seg" onChange=${function (v) { up({ ice: v }); }} />
       <${D.ChoicePills} label="Sweetness" options=${TWO} value=${c.sweet} className="full-seg" onChange=${function (v) { up({ sweet: v }); }} />
       <${D.ChoicePills} label="Cup flair" options=${FLAIR_OPTS} value=${c.flair} className="mode-pills" onChange=${function (v) { up({ flair: v }); }} />
@@ -809,6 +931,15 @@
 
   function BagDrawer(p) {
     var items = p.items;
+    var cS = useState(false), confirmClear = cS[0], setConfirmClear = cS[1];
+    useEffect(function () { if (!p.open) setConfirmClear(false); }, [p.open]);
+    var groups = [], gi = {};
+    items.forEach(function (it) {
+      var k = [it.id, it.ice, it.sweet, it.cupName, it.flair].join('|');
+      if (gi[k] == null) { gi[k] = groups.length; groups.push({ k: k, it: it, keys: [] }); }
+      groups[gi[k]].keys.push(it.key);
+    });
+    var full = items.length >= MAX_CUPS;
     return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="Your order bag" step="Step 1 of 3"
       footer=${items.length ? html`<div className="drawer-stack" style=${{ gap: 12 }}>
         <div className="sum-row"><span>Estimated subtotal</span><span>${subtotalText(items)}</span></div>
@@ -819,20 +950,31 @@
           </div>
           <${D.Button} variant="primary" size="lg" icon="sparkle" block=${true} onClick=${p.onReview}>Review my order<//>`
         : html`<${D.Button} variant="primary" size="lg" block=${true} onClick=${p.onNext}>${p.saved ? 'Finish my delivery details' : 'Choose pickup or delivery'}<//>`}</div>` : null}>
-      ${items.length ? html`<ul className="bag-list">${items.map(function (it) {
-        return html`<li key=${it.key} className="bag-item">
+      ${items.length ? html`<${R.Fragment}><ul className="bag-list">${groups.map(function (g) {
+        var it = g.it, q = g.keys.length;
+        return html`<li key=${g.keys[0]} className="bag-item">
           <${D.CupPreview} width=${56} name=${it.cupName || 'DA JU'} charm=${it.flair} className=${cupClass(it.id)} alt="" />
           <div>
             <h3>${it.name}</h3>
             <p>Ice ${it.ice.toLowerCase()} · sweetness ${it.sweet.toLowerCase()} · ${FLAIR[it.flair]}</p>
             ${it.cupName ? html`<p className="cupname">${it.cupName}</p>` : null}
-            <p style=${{ fontVariantNumeric: 'tabular-nums' }}>${priceText(it.price)}</p>
+            <p style=${{ fontVariantNumeric: 'tabular-nums' }}>${it.price == null ? priceText(null) + (q > 1 ? ' each' : '') : 'RM ' + (it.price * q).toFixed(2)}</p>
+            <div className="bag-qty stepper" role="group" aria-label=${'Number of ' + it.name + (it.cupName ? ' "' + it.cupName + '"' : '')}>
+              <button type="button" className="step-btn" aria-label=${q > 1 ? 'One fewer' : 'Remove ' + it.name} onClick=${function () { p.onRemove(g.keys[g.keys.length - 1]); }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" /></svg></button>
+              <output aria-live="polite">${q}</output>
+              <button type="button" className="step-btn" aria-label="One more" disabled=${full} onClick=${function () { p.onMore(it); }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" /></svg></button>
+            </div>
           </div>
-          <button type="button" className="icon-btn" aria-label=${'Remove ' + it.name} onClick=${function () { p.onRemove(it.key); }}>
+          <button type="button" className="icon-btn" aria-label=${'Remove ' + (q > 1 ? 'all ' + q + ' ' : '') + it.name} onClick=${function () { p.onRemoveMany(g.keys); }}>
             <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" /></svg>
           </button>
         </li>`;
-      })}</ul>` : html`<div className="empty">
+      })}</ul>
+      ${full ? html`<p className="fine">That's ${MAX_CUPS} cups, the most we can take in one order.</p>` : null}
+      <${D.Button} variant="ghost" className="bag-clear" onClick=${function () { if (!confirmClear) { setConfirmClear(true); return; } setConfirmClear(false); p.onClear(); }}>${confirmClear ? 'Tap again to empty your bag' : 'Clear bag'}<//>
+      <//>` : html`<div className="empty">
         <${D.Doodle} name="bag" size=${48} />
         <p className="body p0">Your bag is empty. Pick a matcha and make it yours.</p>
         <${D.Button} variant="sticker" icon="sparkle" onClick=${p.onBrowse}>Browse the menu<//>
@@ -844,16 +986,26 @@
     var f = p.f, set = p.set, tried = p.tried, err = p.err;
     var sched = D.schedule[f.mode][f.day];
     var slot = f.mode === 'PICK_UP' ? sched.location + ' · ' + sched.time : f.mode === 'GRAB_EXPRESS' ? sched.label + ' ' + sched.time : sched.time + ' · ' + sched.area.replace(/ \| /g, ', ');
-    var now = p.now, weekdayMissed = f.day === 'weekday' && !isWeekend(now) && mins(now) >= 805 && f.mode !== 'COD';
+    var now = p.now, popup = f.mode === 'PICK_UP' ? f.popup : null;
+    /* #11: weekday lunch pre-orders close at 12:30 PM (when pickup starts); weekend Grab Express dispatch ends at 4:00 PM */
+    var weekdayMissed = !popup && f.day === 'weekday' && !isWeekend(now) && mins(now) >= LUNCH_CUTOFF && f.mode !== 'COD';
+    var weekendGrabMissed = f.mode === 'GRAB_EXPRESS' && f.day === 'weekend' && isWeekend(now) && mins(now) >= WEEKEND_GRAB_END;
+    var codOther = f.mode === 'COD' && f.zone === 'OTHER';
+    if (popup) slot = 'Pop-up stall · ' + popup.venue + ' · ' + popup.days + ', ' + popup.time;
     return html`<${R.Fragment}>
       ${p.showMode ? html`<${D.ChoicePills} label="Fulfillment" options=${MODE_OPTS} value=${f.mode} className="mode-pills" onChange=${function (v) { set({ mode: v }); }} />` : null}
       <${D.ChoicePills} variant="segmented" label="When" options=${DAY_OPTS} value=${f.day} className="full-seg" onChange=${function (v) { set({ day: v }); }} />
       <p className="slot-line"><${D.Doodle} name="clock" size=${20} />${slot}</p>
       ${weekdayMissed ? html`<${D.Notice} tone="info" title=${"Today's lunch window has closed"}
           action=${html`<${D.Button} variant="secondary" icon="car" onClick=${function () { set({ mode: 'COD' }); }}>Switch to COD tonight<//>`}>
-          It's ${clock(now)} in KK, after the 12:30 PM – 1:25 PM window. This order will go to the next weekday window, or switch to Weekday COD (after 6:30 PM).<//>` : null}
+          It's ${clock(now)} in KK. Pre-orders for today's 12:30 PM – 1:25 PM window closed at 12:30 PM, so this order will go to the next weekday window. Or switch to Weekday COD (after 6:30 PM).<//>` : null}
+      ${weekendGrabMissed ? html`<${D.Notice} tone="info" title=${"Today's Grab Express window has closed"}>
+          It's ${clock(now)} in KK, after the 9:00 AM – 4:00 PM weekend dispatch window. ${dow(now) === 6 ? "We'll send it in tomorrow's window." : "We'll send it in next weekend's window, or pick Weekdays for a lunchtime Grab."}<//>` : null}
+      ${popup ? html`<${D.Notice} tone="availability" title=${'Pickup at our pop-up stall'}
+          action=${html`<${D.Button} variant="secondary" onClick=${function () { set({ popup: null }); }}>Pick up at ${sched.location} instead<//>`}>
+          Collect your cups at the DAJU stall at ${popup.venue}, ${popup.place} (${popup.days}, ${popup.time}). Show your ticket and skip the queue.<//>` : null}
 
-      ${f.mode === 'PICK_UP' && f.day === 'weekend' ? html`
+      ${f.mode === 'PICK_UP' && f.day === 'weekend' && !popup ? html`
         <${D.Notice} tone="availability" title="Pending time confirmation">Weekend pickups at Maang Apartment are by arrangement. Tell us a time and we'll confirm or suggest another.<//>
         <${D.TextField} label="Preferred pickup time" required=${true} placeholder="e.g. Saturday, 3:00 PM" value=${f.prefTime} error=${tried ? err.prefTime : undefined}
           onChange=${function (e) { set({ prefTime: e.target.value }); }} />` : null}
@@ -862,11 +1014,11 @@
         <${D.ChoicePills} label="Dispatch window (9:00 AM – 4:00 PM)" className="window-pills" options=${GRAB_WEEKEND} value=${f.grabWindow} onChange=${function (v) { set({ grabWindow: v }); }} />` : null}
 
       ${f.mode === 'COD' ? html`
-        <${D.ZonePicker} value=${f.zone} onChange=${function (z) { set({ zone: z }); }} onSwitchToGrab=${function () { set({ mode: 'GRAB_EXPRESS', zone: undefined }); }} />
+        <${D.ZonePicker} value=${f.zone} onChange=${function (z) { set({ zone: z }); }} onSwitchToGrab=${function () { set({ mode: 'GRAB_EXPRESS' }); }} />
         ${tried && err.zone ? html`<p className="dj-field-error" role="alert"><${D.Doodle} name="sparkle" size=${16} />${err.zone}</p>` : null}
         ${f.day === 'weekend' ? html`<${D.Notice} tone="availability">Weekend COD is based on order & availability. We'll confirm before dispatch.<//>` : null}` : null}
 
-      ${f.mode !== 'PICK_UP' && f.zone !== 'OTHER' ? html`
+      ${f.mode !== 'PICK_UP' && !codOther ? html`
         <${D.TextField} label=${f.mode === 'COD' ? 'Exact drop-off address' : 'Delivery address'} required=${true} multiline=${true} rows=${2} autoComplete="street-address"
           placeholder="Street, building, unit" value=${f.address} error=${tried ? err.address : undefined} onChange=${function (e) { set({ address: e.target.value }); }} />
         <${D.TextField} label="Address notes" hint="Optional. A landmark helps the rider." placeholder="Blue gate, beside the bakery" value=${f.notes} onChange=${function (e) { set({ notes: e.target.value }); }} />` : null}
@@ -880,9 +1032,6 @@
 
   function FulfillDrawer(p) {
     var f = p.f, set = p.setF, tried = p.tried, err = p.errors;
-    var sched = D.schedule[f.mode][f.day];
-    var slot = f.mode === 'PICK_UP' ? sched.location + ' · ' + sched.time : f.mode === 'GRAB_EXPRESS' ? sched.label + ' ' + sched.time : sched.time + ' · ' + sched.area.replace(/ \| /g, ', ');
-    var now = p.now, weekdayMissed = f.day === 'weekday' && !isWeekend(now) && mins(now) >= 805 && f.mode !== 'COD';
     return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="How should we get it to you?" step="Step 2 of 3"
       footer=${html`<div className="drawer-stack" style=${{ gap: 10 }}>
         ${tried && Object.keys(err).length ? html`<p className="fine" style=${{ color: 'var(--alert)', fontWeight: 600 }} role="alert">Fix the highlighted ${Object.keys(err).length === 1 ? 'field' : 'fields'} to see your ticket.</p>` : null}
@@ -898,6 +1047,7 @@
     var bz = useState(false), busy = bz[0], setBusy = bz[1];
     useEffect(function () { if (!p.open) setRaw(false); }, [p.open]);
     useEffect(function () { if (showRaw && ta.current) { ta.current.focus(); ta.current.select(); } }, [showRaw]);
+    usePreparedTicket(p.order, p.open);
     var text = orderMessage(p.order);
     return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="Your order ticket" step="Step 3 of 3"
       footer=${html`<div className="drawer-stack" style=${{ gap: 10 }}>
@@ -937,19 +1087,39 @@
     </nav>`;
   }
 
+  /* #52: top links include Build your cup and Pop-ups */
+  var NAV_LINKS = [{ label: 'Weekly Drop', href: '#drop' }, { label: 'Menu', href: '#menu' }, { label: 'Build your cup', href: '#studio' }, { label: 'How to Order', href: '#order' }, { label: 'Pop-ups', href: '#popups' }];
+
   /* ---------- App ---------- */
   function App() {
     var now0 = myt();
+    var boot = useRef(null); if (!boot.current) boot.current = loadSaved();   /* what this visitor had before a reload */
+    var B = boot.current;
     var nowS = useState(now0), now = nowS[0], setNow = nowS[1];
-    var bagS = useState([]), bag = bagS[0], setBag = bagS[1];
-    var studioS = useState({ drink: WEEKLY.id, qty: 1, mode: 'same', active: 0, cups: [{ name: '', ice: 'Normal', sweet: 'Normal', flair: 'butterfly' }] }), studio = studioS[0], setStudio = studioS[1];
+    var refS = useState(function () { return /^[A-Z0-9]{4}$/.test(B.ref || '') ? B.ref : refCode(); }), refC = refS[0];
+    var bagS = useState(function () {
+      return (Array.isArray(B.bag) ? B.bag : []).filter(function (it) { return it && MENU.some(function (m) { return m.id === it.id; }); }).slice(0, MAX_CUPS)
+        .map(function (it) { var m = drinkById(it.id); return Object.assign({}, it, { name: m.name, price: m.price }); });   /* names and prices always come from today's menu */
+    }), bag = bagS[0], setBag = bagS[1];
+    var studioS = useState(function () {
+      var d = { drink: WEEKLY.id, qty: 1, mode: 'same', active: 0, eachEdited: false, cups: [{ name: '', ice: 'Normal', sweet: 'Normal', flair: 'butterfly' }] };
+      var x = B.studio; return x && Array.isArray(x.cups) && x.cups.length && x.qty >= 1 && x.qty <= MAX_CUPS ? Object.assign(d, x) : d;
+    }), studio = studioS[0], setStudio = studioS[1];
     var stepS = useState('pick'), orderStep = stepS[0], setOrderStep = stepS[1];
-    var savedS = useState(false), saved = savedS[0], setSaved = savedS[1];
+    var savedS = useState(!!B.saved), saved = savedS[0], setSaved = savedS[1];
     var secTriedS = useState(false), secTried = secTriedS[0], setSecTried = secTriedS[1];
     var flashS = useState(0), flash = flashS[0], setFlash = flashS[1];
     var burstS = useState(0), burst = burstS[0], setBurst = burstS[1];
-    var dayS = useState(isWeekend(now0) ? 'weekend' : 'weekday'), day = dayS[0], setDayRaw = dayS[1];
-    var fS = useState({ mode: 'PICK_UP', day: isWeekend(now0) ? 'weekend' : 'weekday', zone: undefined, address: '', notes: '', prefTime: '', grabWindow: GRAB_WEEKEND[0], feeAck: false, customer: '', phone: '' }), f = fS[0], setFRaw = fS[1];
+    var fS = useState(function () {
+      var d = { mode: 'PICK_UP', day: isWeekend(now0) ? 'weekend' : 'weekday', zone: null, address: '', notes: '', prefTime: '', grabWindow: GRAB_WEEKEND[0], feeAck: false, customer: '', phone: '', popup: null };
+      var x = B.f && typeof B.f === 'object' ? B.f : {}, out = Object.assign({}, d);
+      Object.keys(d).forEach(function (k) { if (x[k] != null && typeof x[k] === typeof d[k]) out[k] = x[k]; });
+      if (x.zone && D.codZones.concat(['OTHER']).indexOf(x.zone) >= 0) out.zone = x.zone;
+      if (x.popup && x.popup.venue && popLive(x.popup, now0)) out.popup = x.popup;
+      if (!D.schedule[out.mode] || ['weekday', 'weekend'].indexOf(out.day) < 0) { out.mode = d.mode; out.day = d.day; }
+      return out;
+    }), f = fS[0], setFRaw = fS[1];
+    var day = f.day;   /* #42: one day setting shared by Step 1 and Step 2 */
     var drawerS = useState(null), drawer = drawerS[0], setDrawer = drawerS[1];
     var custS = useState(null), custItem = custS[0], setCustItem = custS[1];
     var triedS = useState(false), tried = triedS[0], setTried = triedS[1];
@@ -963,7 +1133,11 @@
     var pinned = !reduce;  /* the cup stays centred and builds with the scroll on phones and desktop */
     var side = narrow ? 'bottom' : 'right';
 
-    var storyDone = useRef(false), heroRef = useRef(null), secRef = useRef(null), stickRef = useRef(null), toastT = useRef(null), toastT2 = useRef(null), keyN = useRef(0);
+    var storyDone = useRef(false), heroRef = useRef(null), secRef = useRef(null), stickRef = useRef(null), toastT = useRef(null), toastT2 = useRef(null);
+    var keyN = useRef(bag.reduce(function (m, it) { return Math.max(m, +it.key || 0); }, 0));
+    var closeT = useRef(0), switchT = useRef(0), switchTok = useRef(0), saveT = useRef(0);
+    useEffect(function () { storeSaved({ ref: refC, bag: bag, studio: studio, f: f, saved: saved }); }, [refC, bag, studio, f, saved]);
+    useEffect(function () { return function () { clearTimeout(closeT.current); clearTimeout(switchT.current); clearTimeout(saveT.current); }; }, []);
 
     useEffect(function () { var t = setInterval(function () { setNow(myt()); }, 30000); return function () { clearInterval(t); }; }, []);
     useEffect(function () { document.body.classList.toggle('is-locked', !!drawer); }, [drawer]);
@@ -989,28 +1163,64 @@
           var top0 = narrow ? 0 : 64, pr = Math.max(0, Math.min(1, (top0 - r.top) / Math.max(1, total)));
           /* Hold the screen on this section until the Matcha of the Week story has played to the RM8.99 tag:
              scrolling down stops at the tag's spot and the cards keep playing; scrolling up is always free. */
-          var hold = Math.ceil(window.scrollY + r.top - top0 + total * BOOM_AT) + 2;
+          var stopAt = Math.ceil(total * BOOM_AT) + 2, hold = Math.round(window.scrollY + r.top - top0) + stopAt;
           holdY = storyDone.current ? -1 : hold;
-          if (holdY >= 0 && window.scrollY > holdY + 1 && r.top <= top0 + 1 && Date.now() - userAt < 1600 && lastY <= holdY + 2) { window.scrollTo({ top: holdY, behavior: 'instant' }); prevY = holdY; pr = BOOM_AT; }
+          /* Phones: a native snap stop at the price-tag spot catches even a long, gliding swipe (scrolling code can't
+             stop the glide on iPhone, and fighting it makes the page jump). Switched on only while the story is
+             unfinished; with no resting spot past the tag, the page simply can't go further until it pops. */
+          var stopKey = total + ':' + pad + ':' + top0;
+          if (stopKey !== lastStops) {   /* only re-placed when the layout changes, not on every frame */
+            lastStops = stopKey;
+            var stops = sec.querySelectorAll('.story-stop');
+            for (var k = 0; k < stops.length; k++) {
+              /* resting spots for each cup layer and story card, then the price-tag spot (the only one you can't glide past) */
+              var at = k < stops.length - 1 ? Math.round(total * STOP_AT[k]) : stopAt;
+              stops[k].style.top = (at + pad) + 'px'; stops[k].style.scrollMarginTop = top0 + 'px';
+            }
+          }
+          var inSec = r.top <= top0 + 2 && r.bottom > 0;
+          setBlocking(holdY >= 0 && inSec);
+          if (holdY >= 0) startPoll(); else stopPoll();
+          document.documentElement.classList.toggle('story-snap', holdY >= 0 && input === 'touch' && inSec);
+          if (holdY >= 0 && input !== 'touch' && input !== 'tap' && window.scrollY > holdY + 1 && r.top <= top0 + 1 && Date.now() - userAt < 1600 && lastY <= holdY + 2) { window.scrollTo({ top: holdY, behavior: 'instant' }); prevY = holdY; pr = BOOM_AT; }
           setProgress(pr);
           setLayer(Math.min(5, 1 + Math.floor((pr / BUILD_END) * 5.2)));
         }
       }
       function on() { if (!raf) raf = requestAnimationFrame(tick); }
-      /* while the story is holding, swallow downward wheel/touch scrolls so the page doesn't overshoot and snap back */
-      var holdY = -1, ty = 0, userAt = 0, prevY = window.scrollY;  /* only hold for the visitor's own scrolling, never for menu/tab jumps */
-      function holding() { return pinned && holdY >= 0 && !storyDone.current && Math.abs(window.scrollY - holdY) <= 2; }
-      function onKey(e) { if (/^(ArrowDown|PageDown|End| |Spacebar)$/.test(e.key)) userAt = Date.now(); }
-      function onWheel(e) { userAt = Date.now(); if (e.deltaY > 0 && holding()) e.preventDefault(); }
-      function onTouchStart(e) { ty = e.touches[0].clientY; }
-      function onTouchMove(e) { var y = e.touches[0].clientY, up = y > ty; ty = y; userAt = Date.now(); if (!up && holding()) e.preventDefault(); }
-      var poll = setInterval(function () { if (holdY >= 0 && storyDone.current) on(); }, 120);
-      window.addEventListener('wheel', onWheel, { passive: false }); window.addEventListener('keydown', onKey);
+      var holdY = -1, ty = 0, userAt = 0, input = '', prevY = window.scrollY;  /* only hold for the visitor's own scrolling, never for menu/tab jumps */
+      var pad = 0, lastStops = '';
+      function measure() { pad = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0; }   /* read once, and again on resize */
+      function onResize() { measure(); on(); }
+      function holding() { return pinned && holdY >= 0 && !storyDone.current && Math.abs(window.scrollY - holdY) <= 3; }
+      /* Passive listeners only note what kind of scrolling the visitor is doing; they never block it */
+      function onKey(e) { if (/^(ArrowDown|PageDown|End| |Spacebar)$/.test(e.key)) { userAt = Date.now(); input = 'key'; } }
+      function onWheel() { userAt = Date.now(); input = 'wheel'; }
+      function onTouchStart(e) { ty = e.touches[0].clientY; input = 'tap'; userAt = Date.now(); }  /* a tap (tab or link) isn't a swipe */
+      function onTouchMove(e) { userAt = Date.now(); if (input !== 'touch') { input = 'touch'; on(); } }
+      /* The blocking listeners (the story hold) are only attached while the pinned section is on screen and the story
+         isn't finished. Everywhere else on the page, scrolling has no non-passive listener at all. */
+      function blockWheel(e) { if (e.deltaY > 0 && holding()) e.preventDefault(); }
+      function blockTouch(e) { var y = e.touches[0].clientY, up = y > ty; ty = y; if (!up && holding()) e.preventDefault(); }
+      var blocking = false;
+      function setBlocking(v) {
+        if (v === blocking) return; blocking = v;
+        if (v) { window.addEventListener('wheel', blockWheel, { passive: false }); window.addEventListener('touchmove', blockTouch, { passive: false }); }
+        else { window.removeEventListener('wheel', blockWheel); window.removeEventListener('touchmove', blockTouch); }
+      }
+      /* while holding, re-check every 120ms so the page lets go as soon as the price tag pops (no timer otherwise) */
+      var poll = 0;
+      function startPoll() { if (!poll) poll = setInterval(function () { if (storyDone.current) on(); }, 120); }
+      function stopPoll() { if (poll) { clearInterval(poll); poll = 0; } }
+      /* a tap on a tab, link or button may jump the page: drop the resting spots first so the jump isn't caught */
+      function onClick() { input = 'tap'; document.documentElement.classList.remove('story-snap'); }
+      measure();
+      window.addEventListener('wheel', onWheel, { passive: true }); window.addEventListener('keydown', onKey);
       window.addEventListener('touchstart', onTouchStart, { passive: true });
-      window.addEventListener('touchmove', onTouchMove, { passive: false });
-      window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', on);
+      window.addEventListener('touchmove', onTouchMove, { passive: true }); document.addEventListener('click', onClick, true);
+      window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', onResize);
       tick();
-      return function () { clearInterval(poll); window.removeEventListener('wheel', onWheel); window.removeEventListener('keydown', onKey); window.removeEventListener('touchstart', onTouchStart); window.removeEventListener('touchmove', onTouchMove); window.removeEventListener('scroll', on); window.removeEventListener('resize', on); if (raf) cancelAnimationFrame(raf); };
+      return function () { stopPoll(); setBlocking(false); window.removeEventListener('wheel', onWheel); window.removeEventListener('keydown', onKey); window.removeEventListener('touchstart', onTouchStart); window.removeEventListener('touchmove', onTouchMove); document.removeEventListener('click', onClick, true); window.removeEventListener('scroll', on); window.removeEventListener('resize', onResize); document.documentElement.classList.remove('story-snap'); if (raf) cancelAnimationFrame(raf); };
     }, [pinned, reduce, narrow]);
 
     function showToast(m) {
@@ -1018,16 +1228,25 @@
       toastT2.current = setTimeout(function () { setToastOut(true); }, 2400);
       toastT.current = setTimeout(function () { setToast(''); setToastOut(false); }, 2620);
     }
-    function closeDrawer() {
-      if (reduce) { setDrawer(null); return; }
+    /* #7: one pending close at a time. Opening a drawer cancels a close that is still running, and anything that has to
+       happen after the close (like scrolling) waits until the page is unlocked. */
+    function openDrawer(name) {
+      clearTimeout(closeT.current); closeT.current = 0;
+      document.body.classList.remove('is-closing');
+      setDrawer(name);
+    }
+    function closeDrawer(after) {
+      clearTimeout(closeT.current);
+      function done() { closeT.current = 0; document.body.classList.remove('is-closing'); setDrawer(null); if (after) setTimeout(after, 30); }
+      if (reduce) { done(); return; }
       document.body.classList.add('is-closing');
-      setTimeout(function () { document.body.classList.remove('is-closing'); setDrawer(null); }, 200);
+      closeT.current = setTimeout(done, 200);
     }
     function setCup(o, quiet) {
       setStudio(function (st) {
         var i = st.qty > 1 && st.mode === 'each' ? st.active : 0;
         var cups = st.cups.slice(); cups[i] = Object.assign({}, cups[i], o);
-        return Object.assign({}, st, { cups: cups });
+        return Object.assign({}, st, { cups: cups, eachEdited: st.eachEdited || (st.qty > 1 && st.mode === 'each') });
       });
       if (!quiet) setBurst(function (n) { return n + 1; });
     }
@@ -1043,7 +1262,8 @@
       buzz();
       setStudio(function (st) {
         var cups = st.cups.slice();
-        if (m === 'each') cups = cups.map(function () { return Object.assign({}, st.cups[0]); }); // start every cup from the shared choice
+        /* the first time, every cup starts from the shared choice; after that, cups you already customized keep their edits (#13) */
+        if (m === 'each' && !st.eachEdited) cups = cups.map(function () { return Object.assign({}, st.cups[0]); });
         return Object.assign({}, st, { mode: m, cups: cups, active: 0 });
       });
     }
@@ -1052,8 +1272,17 @@
       return out;
     }
     function scrollToId(id) { setTimeout(function () { var el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); }, 30); }
-    function setF(o) { setFRaw(function (x) { return Object.assign({}, x, o); }); }
-    function setDay(v) { setDayRaw(v); setF({ day: v }); }
+    function setF(o) {
+      setFRaw(function (x) {
+        var n = Object.assign({}, x, o);
+        if (o.mode && o.mode !== x.mode) {
+          if (o.mode !== 'COD') n.zone = null;          /* #3: leaving COD drops the COD area ("Somewhere else" can't trap Grab) */
+          if (o.mode !== 'PICK_UP' && !('popup' in o)) n.popup = null;
+        }
+        return n;
+      });
+    }
+    function setDay(v) { setF({ day: v }); }
     function setMode(m) { setF({ mode: m }); buzz(); }
     /* Keep a method's header steady on screen while cards fold around it: every frame, scroll by
        however much the header moved, easing it toward the top of the screen. */
@@ -1062,9 +1291,12 @@
       cancelAnimationFrame(followRaf.current);
       var el = document.getElementById('station-' + m); if (!el) return;
       var navH = narrow ? 0 : 64, endY = navH + 12 + (parseFloat(getComputedStyle(document.documentElement).paddingTop) || 0);
-      var startY = el.getBoundingClientRect().top;
-      if (startY < endY - 4 || startY > window.innerHeight - 80) startY = Math.max(endY, Math.min(startY, window.innerHeight - 80)); // off screen: bring it in
+      var startY = el.getBoundingClientRect().top, vh = window.innerHeight;
+      if (startY < -vh || startY > vh * 1.5) startY = Math.max(-vh, Math.min(startY, vh * 1.5)); // far off screen: start one screen away, then glide
       var t0 = performance.now(), D2 = reduce ? 0 : dur;
+      function stop() { cancelAnimationFrame(followRaf.current); off(); }
+      function off() { window.removeEventListener('wheel', stop); window.removeEventListener('touchstart', stop); window.removeEventListener('keydown', stop); }
+      window.addEventListener('wheel', stop, { passive: true }); window.addEventListener('touchstart', stop, { passive: true }); window.addEventListener('keydown', stop);
       function ease(x) { return 1 - Math.pow(1 - x, 3); }
       function frame(now) {
         var e = document.getElementById('station-' + m); if (!e) return;
@@ -1072,7 +1304,7 @@
         var want = startY + (endY - startY) * ease(p);
         var diff = e.getBoundingClientRect().top - want;
         if (Math.abs(diff) > 0.5) window.scrollTo({ top: window.scrollY + diff, behavior: 'instant' });
-        if (p < 1) followRaf.current = requestAnimationFrame(frame);
+        if (p < 1) followRaf.current = requestAnimationFrame(frame); else off();
       }
       followRaf.current = requestAnimationFrame(frame);
     }
@@ -1081,32 +1313,41 @@
       var switching = orderStep === 'details' && m !== f.mode;
       if (switching) setOrderStep('closing');         // fold the open form; every card is a bar for a moment
       followHeader(m, switching ? 700 : 420);
-      setTimeout(function () {
-        setF({ mode: m, day: switching ? f.day : day });
-        requestAnimationFrame(function () { requestAnimationFrame(function () { setOrderStep('details'); }); });
+      clearTimeout(switchT.current);
+      var tok = ++switchTok.current;   /* #42: "Change method" (or another tap) cancels this, so the form can't reopen by itself */
+      switchT.current = setTimeout(function () {
+        switchT.current = 0; if (tok !== switchTok.current) return;
+        setF({ mode: m });
+        requestAnimationFrame(function () { requestAnimationFrame(function () { if (tok === switchTok.current) setOrderStep('details'); }); });
       }, switching && !reduce ? 280 : 0);
     }
-    function addItem(menuItem, c) { addItems(menuItem, [c]); }
     function addItems(menuItem, list) {
+      var room = MAX_CUPS - bag.length;   /* #13: "Up to 10 per order" is a real limit */
+      if (room <= 0) { showToast('Your bag is full: ' + MAX_CUPS + ' cups is the most per order'); return 0; }
+      if (list.length > room) { list = list.slice(0, room); setTimeout(function () { showToast('Added ' + room + (room === 1 ? ' cup' : ' cups') + '. Your bag is now full (' + MAX_CUPS + ' max)'); }, 0); }
       var its = list.map(function (c) { keyN.current += 1; return { key: keyN.current, id: menuItem.id, name: menuItem.name, price: menuItem.price, ice: c.ice, sweet: c.sweet, cupName: (c.name || '').trim(), flair: c.flair }; });
       setBag(function (b) { return b.concat(its); });
       setFlash(function (n) { return n + 1; });
       setBurst(function (n) { return n + 1; });
       buzz();
+      return its.length;
     }
 
     var errors = {};
     if (!f.customer.trim()) errors.customer = 'Add your name so we can label the cup bag.';
-    if (!/\d{7,}/.test(f.phone.replace(/\D/g, ''))) errors.phone = 'Add a WhatsApp number so we can confirm your order.';
-    if (f.mode === 'PICK_UP' && f.day === 'weekend' && !f.prefTime.trim()) errors.prefTime = 'Add a time so we can confirm or suggest another.';
-    if (f.mode !== 'PICK_UP' && !f.address.trim()) errors.address = 'Add the address the rider should bring your cup to.';
+    if (!f.phone.trim()) errors.phone = 'Add a WhatsApp number so we can confirm your order.';
+    else if (!phoneOk(f.phone)) errors.phone = 'Check the number: a Malaysian mobile like 012-345 6789, or +country code for other countries.';
+    var popup = f.mode === 'PICK_UP' && f.popup && popLive(f.popup, now) ? f.popup : null;
+    if (f.mode === 'PICK_UP' && f.day === 'weekend' && !popup && !f.prefTime.trim()) errors.prefTime = 'Add a time so we can confirm or suggest another.';
+    /* #3 / #9: the address is only required when its field is on screen (not for COD "Somewhere else") */
+    if (f.mode !== 'PICK_UP' && !(f.mode === 'COD' && f.zone === 'OTHER') && !f.address.trim()) errors.address = 'Add the address the rider should bring your cup to.';
     if (f.mode === 'GRAB_EXPRESS' && !f.feeAck) errors.feeAck = true;
     if (f.mode === 'COD' && !f.zone) errors.zone = 'Pick your COD area.';
     if (f.mode === 'COD' && f.zone === 'OTHER') errors.zone = 'COD covers four areas only.';
 
     var sch = D.schedule[f.mode][f.day];
-    var where = f.mode === 'PICK_UP' ? sch.location : f.mode === 'COD' ? [f.address.trim(), f.zone && f.zone !== 'OTHER' ? f.zone : ''].filter(Boolean).join(', ') : f.address.trim();
-    var when = f.mode === 'PICK_UP' && f.day === 'weekend' ? (f.prefTime.trim() || 'Time by arrangement') + ' (pending time confirmation)'
+    var where = popup ? 'Pop-up stall: ' + popup.venue + ', ' + popup.place : f.mode === 'PICK_UP' ? sch.location : f.mode === 'COD' ? [f.address.trim(), f.zone && f.zone !== 'OTHER' ? f.zone : ''].filter(Boolean).join(', ') : f.address.trim();
+    var when = popup ? popup.days + ', ' + popup.time : f.mode === 'PICK_UP' && f.day === 'weekend' ? (f.prefTime.trim() || 'Time by arrangement') + ' (pending time confirmation)'
       : f.mode === 'GRAB_EXPRESS' && f.day === 'weekend' ? f.grabWindow : sch.time;
     function ticketItems(items) {
       var out = [], idx = {};
@@ -1118,7 +1359,7 @@
       });
       return out;
     }
-    var liveOrder = { orderRef: orderRef(now), customer: f.customer.trim(), phone: f.phone.trim(), mode: f.mode, schedule: f.day === 'weekend' ? 'WEEKEND' : 'WEEKDAY',
+    var liveOrder = { orderRef: orderRef(now, refC), customer: f.customer.trim(), phone: f.phone.trim(), mode: f.mode, schedule: f.day === 'weekend' ? 'WEEKEND' : 'WEEKDAY',
       location: where, time: when, address: f.mode !== 'PICK_UP' ? f.notes.trim() : '', items: ticketItems(bag), feeAck: f.feeAck, subtotal: subtotalText(bag) };
 
     var studioDrink = drinkById(studio.drink);
@@ -1126,60 +1367,88 @@
     var shown = bag.length ? bag : studioItems;
     var pageOrder = Object.assign({}, liveOrder, {
       customer: liveOrder.customer || '[Your name]', phone: liveOrder.phone || '[Your phone]',
-      location: liveOrder.location || (f.mode === 'PICK_UP' ? sch.location : '[Your address]'),
+      location: liveOrder.location || (f.mode === 'PICK_UP' ? sch.location : f.mode === 'COD' && f.zone === 'OTHER' ? '[Outside the COD areas]' : '[Your address]'),
       items: ticketItems(shown), subtotal: subtotalText(shown) });
-    var detailsComplete = saved && !Object.keys(errors).length;
+    var detailsReady = saved && !Object.keys(errors).length;
+    var detailsComplete = detailsReady && bag.length > 0;   /* #8: an empty bag is never a finished order */
 
-    var slotLine = MODE_NAME[f.mode] + ' · ' + (f.mode === 'PICK_UP' ? sch.location + ' · ' : '') + (f.mode === 'PICK_UP' && f.day === 'weekend' ? 'Time by arrangement' : when);
+    var slotLine = MODE_NAME[f.mode] + ' · ' + (popup ? 'Pop-up stall · ' + popup.venue + ' · ' : f.mode === 'PICK_UP' ? sch.location + ' · ' : '') + (f.mode === 'PICK_UP' && f.day === 'weekend' && !popup ? 'Time by arrangement' : when);
 
     return html`
       <div id="top">
         <div className="preview-strip"><b>Website preview</b><span>Prices and social handles are placeholders until the menu is final.</span></div>
-        <${D.NavBar} className="nav-centered" bagCount=${bag.length} onBag=${function () { setDrawer('bag'); }} />
+        <${D.NavBar} className="nav-centered" links=${NAV_LINKS} bagCount=${bag.length} onBag=${function () { openDrawer('bag'); }} />
         <main>
-          <${Hero} narrow=${narrow} heroRef=${heroRef} onCustomize=${function (m) { setCustItem(m); setDrawer('custom'); }} />
+          <${Hero} narrow=${narrow} heroRef=${heroRef} onCustomize=${function (m) { setCustItem(m); openDrawer('custom'); }} />
           <${Assembly} narrow=${narrow} reduce=${reduce} pinned=${pinned} layer=${layer} setLayer=${setLayer} progress=${progress} doneRef=${storyDone} secRef=${secRef} stickRef=${stickRef} />
-          <${Menu} narrow=${narrow} onCustomize=${function (m) { setCustItem(m); setDrawer('custom'); }} />
+          <${Menu} narrow=${narrow} onCustomize=${function (m) { setCustItem(m); openDrawer('custom'); }} />
           <${Studio} narrow=${narrow} studio=${studio} setCup=${setCup} setQty=${setQty} setMode=${setStudioMode} setActive=${function (i) { setStudio(function (st) { return Object.assign({}, st, { active: i }); }); }} setDrink=${function (id) { setStudio(function (st) { return Object.assign({}, st, { drink: id }); }); }} burst=${burst} bagCount=${bag.length}
-            onAdd=${function () { var l = studioCups(); addItems(studioDrink, l); showToast(l.length === 1 ? 'Added to your bag' : 'Added ' + l.length + ' cups to your bag'); }} />
+            onAdd=${function () { var l = studioCups(); if (l.length > MAX_CUPS - bag.length) { addItems(studioDrink, l); return; } var n = addItems(studioDrink, l); if (n) showToast(n === 1 ? 'Added to your bag' : 'Added ' + n + ' cups to your bag'); }} />
           <${Route} day=${day} setDay=${setDay} mode=${f.mode} saved=${saved} step=${orderStep} onChoose=${chooseMethod}
-            onBack=${function () { buzz(); followHeader(f.mode, 420); setOrderStep('pick'); }}
+            onBack=${function () { buzz(); clearTimeout(switchT.current); switchTok.current++; followHeader(f.mode, 420); setOrderStep('pick'); }}
             f=${f} setF=${setF} tried=${secTried} errors=${errors} now=${now}
-            onSave=${function () { setSecTried(true); if (Object.keys(errors).length) { buzz(); return; } setSaved(true); setOrderStep('pick'); setFlash(function (n) { return n + 1; }); showToast('Details saved to your ticket'); scrollToId('ticket'); }} />
+            onSave=${function () { setSecTried(true); if (Object.keys(errors).length) { buzz(); return; } setSaved(true); setOrderStep('pick'); setFlash(function (n) { return n + 1; }); showToast('Details saved to your ticket');
+              /* #12: scroll once the form has folded away (320ms), so the ticket lands where it should */
+              clearTimeout(saveT.current); saveT.current = setTimeout(function () { scrollToId('ticket'); }, reduce ? 0 : 340); }} />
           <${SignOff} order=${pageOrder} hasBag=${bag.length > 0} complete=${detailsComplete} flash=${flash} studioQty=${studio.qty} toast=${showToast}
             onDetails=${function () { chooseMethod(f.mode); }}
-            onReview=${function () { setDrawer('bag'); }}
-            onAddStudio=${function () { addItems(studioDrink, studioCups()); setDrawer('bag'); }}
+            onReview=${function () { openDrawer(detailsComplete ? 'ticket' : 'bag'); }}
+            onAddStudio=${function () { addItems(studioDrink, studioCups()); openDrawer('bag'); }}
             onCopy=${function () { copyText(orderMessage(pageOrder), function () { showToast('Ticket copied'); }, function () { showToast('Copy is blocked here. Open your bag to select the text.'); }); }} />
-          <${PopUps} onPreorder=${function () { scrollToId('studio'); }} />
+          <${PopUps} now=${now} onPreorder=${function (pu) {
+            /* #4: pickup at the pop-up stall, not the usual Centre Point / Maang Apartment spot */
+            setF({ mode: 'PICK_UP', popup: pu }); setOrderStep('pick');
+            showToast('Pickup set to the ' + pu.venue + ' stall. Build your cup!'); scrollToId('studio');
+          }} />
         </main>
         <${Footer} />
-        ${narrow ? html`<${TabBar} count=${bag.length} onBag=${function () { buzz(); setDrawer('bag'); }} />` : null}
-        ${bag.length && narrow && !drawer ? html`<${D.CheckoutBar} className="is-entering" count=${bag.length} total=${subtotalText(bag)} slot=${slotLine} onCheckout=${function () { setDrawer('bag'); }} />` : null}
+        ${narrow ? html`<${TabBar} count=${bag.length} onBag=${function () { buzz(); openDrawer('bag'); }} />` : null}
+        ${bag.length && narrow && !drawer ? html`<${D.CheckoutBar} className="is-entering" count=${bag.length} total=${subtotalText(bag)} slot=${slotLine} onCheckout=${function () { openDrawer('bag'); }} />` : null}
 
-        <${CustomizeDrawer} open=${drawer === 'custom'} item=${custItem} side=${side} onClose=${function () { closeDrawer(); }}
-          onAdd=${function (m, c) { addItem(m, c); closeDrawer(); showToast('Added to your bag'); }} />
+        <${CustomizeDrawer} open=${drawer === 'custom'} item=${custItem} side=${side} room=${MAX_CUPS - bag.length} onClose=${function () { closeDrawer(); }}
+          onAdd=${function (m, c, n) { var list = []; for (var i = 0; i < (n || 1); i++) list.push(c); var k = addItems(m, list); closeDrawer(); if (k && k === list.length) showToast(k === 1 ? 'Added to your bag' : 'Added ' + k + ' cups to your bag'); }} />
         <${BagDrawer} open=${drawer === 'bag'} side=${side} items=${bag} onClose=${function () { closeDrawer(); }}
           onRemove=${function (k) { setBag(function (b) { return b.filter(function (x) { return x.key !== k; }); }); }}
-          onBrowse=${function () { closeDrawer(); setTimeout(function () { var m = document.getElementById('menu'); if (m) m.scrollIntoView(); }, 0); }}
-          onNext=${function () { setTried(false); setDrawer('fulfill'); }}
+          onRemoveMany=${function (ks) { setBag(function (b) { return b.filter(function (x) { return ks.indexOf(x.key) < 0; }); }); }}
+          onMore=${function (it) { addItems(drinkById(it.id), [{ ice: it.ice, sweet: it.sweet, name: it.cupName, flair: it.flair }]); }}
+          onClear=${function () { setBag([]); showToast('Your bag is empty'); }}
+          onBrowse=${function () { closeDrawer(function () { var m = document.getElementById('menu'); if (m) m.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); }); }}
+          onNext=${function () { setTried(false); openDrawer('fulfill'); }}
           ready=${detailsComplete} saved=${saved} modeName=${MODE_NAME[f.mode]} modeIcon=${{ PICK_UP: 'bag', GRAB_EXPRESS: 'scooter', COD: 'car' }[f.mode]}
           slot=${(f.mode === 'PICK_UP' ? sch.location : where) + ' · ' + when}
-          onReview=${function () { buzz(); setDrawer('ticket'); }} />
+          onReview=${function () { buzz(); openDrawer('ticket'); }} />
         <${FulfillDrawer} open=${drawer === 'fulfill'} side=${side} f=${f} setF=${setF} tried=${tried} errors=${errors} now=${now}
-          onClose=${function () { closeDrawer(); }} onBack=${function () { setDrawer('bag'); }}
-          onNext=${function () { setTried(true); if (!Object.keys(errors).length) { setSaved(true); setDrawer('ticket'); } }} />
+          onClose=${function () { closeDrawer(); }} onBack=${function () { openDrawer('bag'); }}
+          onNext=${function () { setTried(true); if (!Object.keys(errors).length) { setSaved(true); openDrawer('ticket'); } }} />
         <${TicketDrawer} open=${drawer === 'ticket'} side=${side} order=${liveOrder} toast=${showToast}
-          onClose=${function () { closeDrawer(); }} onBack=${function () { setDrawer('fulfill'); }} />
+          onClose=${function () { closeDrawer(); }} onBack=${function () { openDrawer('fulfill'); }} />
         <${Toast} msg=${toast} out=${toastOut} />
       </div>`;
   }
 
+  /* #48: if anything in the page crashes, show a way to order on WhatsApp instead of a blank screen */
+  function Boundary(props) { R.Component.call(this, props); this.state = { failed: false }; }
+  Boundary.prototype = Object.create(R.Component.prototype);
+  Boundary.prototype.constructor = Boundary;
+  Boundary.getDerivedStateFromError = function () { return { failed: true }; };
+  Boundary.prototype.componentDidCatch = function (err) { try { console.error(err); } catch (e) {} };
+  Boundary.prototype.render = function () {
+    if (!this.state.failed) return this.props.children;
+    return html`<div className="noscript-card" role="alert">
+      <p style=${{ fontSize: 28, fontWeight: 700, margin: '0 0 8px' }}>DA | JU</p>
+      <p>Sorry, something went wrong on this page.</p>
+      <p>You can still order: message us on WhatsApp with your drinks, name and pickup or delivery choice.</p>
+      <p><a href=${'https://wa.me/' + WA_NUMBER} target="_blank" rel="noopener">Order on WhatsApp (${WA_DISPLAY})</a></p>
+      <p><button type="button" onClick=${function () { try { sessionStorage.removeItem(SAVE_KEY); } catch (e) {} location.reload(); }}>Reload the page</button></p>
+    </div>`;
+  };
+
   /* ---------- Soft layout motion (FLIP) ----------
      Whenever the DOM changes, children of these containers that moved glide from their old spot (240ms),
-     and newly added children fade and rise in (200ms). Nothing runs under prefers-reduced-motion. */
+     and newly added children fade and rise in (200ms). Nothing runs under prefers-reduced-motion.
+     The scroll-driven cup story (#assembly) is left out: its frame-by-frame changes never trigger a measuring pass. */
   var FLIP_SEL = '.studio-form, .studio, .studio-add, .qty-row, .cup-tabs-wrap, .studio-cup-meta, .details-form, ' +
-    '.dj-drawer-body, .drawer-stack, .bag-list, .dj-tk-meta, .dj-tk-items, .dj-ticket, .signoff-ticket, .btns, .dj-zones, .dj-fee, .dj-field, .assembly-stage, ' +
+    '.dj-drawer-body, .drawer-stack, .bag-list, .dj-tk-meta, .dj-tk-items, .dj-ticket, .signoff-ticket, .btns, .dj-zones, .dj-fee, .dj-field, ' +
     '.hero-actions, .dj-notice-body, .play-row, .empty';
   var EASE = 'cubic-bezier(.2,.8,.2,1)';
   function startFlip() {
@@ -1208,13 +1477,13 @@
           if (!start) {
             if (!el.classList.contains('no-flip')) {
               el._flipIn = el.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 200, easing: EASE });
-              active++; el._flipIn.onfinish = el._flipIn.oncancel = (function (e) { return function () { e._flipIn = null; active--; }; })(el);
+              active++; el._flipIn.onfinish = el._flipIn.oncancel = (function (e) { return function () { e._flipIn = null; active--; if (active <= 0) later(); }; })(el);
             }
           } else {
             var dx = start.x - now.x, dy = start.y - now.y;
             if (Math.abs(dx) > 1 || Math.abs(dy) > 1) {
               el._flip = el.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], { duration: Math.min(320, 180 + Math.hypot(dx, dy) * 0.4), easing: EASE });
-              active++; el._flip.onfinish = el._flip.oncancel = (function (e) { return function () { e._flip = null; active--; }; })(el);
+              active++; el._flip.onfinish = el._flip.oncancel = (function (e) { return function () { e._flip = null; active--; if (active <= 0) later(); }; })(el);
             }
           }
         }
@@ -1223,12 +1492,21 @@
       busy = false;
     }
     var pending = false;
-    var mo = new MutationObserver(function () { if (pending) return; pending = true; Promise.resolve().then(function () { pending = false; pass(); }); });
+    var snapT = 0;
+    function later() { clearTimeout(snapT); snapT = setTimeout(function () { if (!document.hidden && active <= 0) { active = 0; snapshot(); } }, 120); }
+    var mo = new MutationObserver(function (recs) {
+      var relevant = false;
+      for (var i = 0; i < recs.length && !relevant; i++) { var t = recs[i].target, el = t.nodeType === 1 ? t : t.parentElement; if (!el || !el.closest || !el.closest('#assembly')) relevant = true; }
+      if (!relevant || pending) return;
+      pending = true; Promise.resolve().then(function () { pending = false; pass(); });
+    });
     mo.observe(document.getElementById('root'), { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class', 'aria-pressed', 'checked'] });
     var t; window.addEventListener('resize', function () { clearTimeout(t); t = setTimeout(snapshot, 150); });
     document.fonts && document.fonts.ready.then(snapshot);
     setTimeout(function () { snapshot(); ready = true; }, 600);
-    setInterval(function () { if (!document.hidden && active <= 0) { active = 0; snapshot(); } }, 1500);
+    /* re-measure after CSS transitions settle (folds, drawers) and after images load, instead of polling */
+    document.addEventListener('transitionend', function (e) { var t = e.target; if (t && t.closest && !t.closest('#assembly')) later(); }, true);
+    document.addEventListener('load', function (e) { if (e.target && e.target.tagName === 'IMG') later(); }, true);
   }
 
   /* index.html may hold a pre-rendered first screen (see build.py). React replaces it; carry the
@@ -1242,24 +1520,22 @@
       });
     }
     var appRoot = ReactDOM.createRoot(rootEl);
-    ReactDOM.flushSync(function () { appRoot.render(html`<${App} />`); });
+    ReactDOM.flushSync(function () { appRoot.render(html`<${Boundary}><${App} /><//>`); });
+    document.documentElement.classList.remove('has-shell');   /* the snapshot is gone, React owns the page now */
     Array.prototype.forEach.call(rootEl.querySelectorAll(ANIM_SEL), function (el, i) {
       var a = el.getAnimations ? el.getAnimations() : [];
       if (a.length && carry[i] != null) a[0].currentTime = carry[i];
     });
     /* FLIP starts after the hand-over, so swapping out the snapshot does not count as new content */
     if ('MutationObserver' in window && Element.prototype.animate) startFlip();
+    /* #31: a link like /#menu or /#popups arrives before those sections exist; jump there once they do */
+    var id = decodeURIComponent((location.hash || '').slice(1));
+    if (id && id !== 'top' && id !== 'drop' && /^[\w-]+$/.test(id)) {
+      requestAnimationFrame(function () { var t = document.getElementById(id); if (t) t.scrollIntoView({ behavior: 'auto', block: 'start' }); });
+    }
   }
-  /* With a pre-rendered first screen, let it paint first, then hand over to React on the next frame. */
-  function afterPaint() { requestAnimationFrame(function () { requestAnimationFrame(function () { setTimeout(mount, 80); }); }); }
-  if (rootEl.firstChild && window.requestAnimationFrame) {
-    /* wait (at most 1.5s) for the first-screen fonts so the snapshot paints in its real fonts first */
-    var first = ['1em Sacramento', '1em Shrikhand', '1em "DM Sans"', '600 1em "Cormorant Garamond"'];
-    if (document.fonts && document.fonts.load) Promise.race([
-      Promise.all(first.map(function (f) { return document.fonts.load(f).catch(function () {}); })),
-      new Promise(function (r) { setTimeout(r, 1500); })
-    ]).then(afterPaint, afterPaint);
-    else afterPaint();
-  }
+  /* #34: with a pre-rendered first screen, hand over to React as soon as that screen has painted once
+     (no waiting for fonts, which load the same either way), so the buttons work straight away. */
+  if (rootEl.firstChild && window.requestAnimationFrame) requestAnimationFrame(function () { setTimeout(mount, 0); });
   else mount();
 })();

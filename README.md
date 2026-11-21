@@ -19,8 +19,11 @@ For speed, the page loads fonts from `fonts/`, React from `vendor/` (bundled int
 
 ## Link previews
 
-`og-image.png` is the image shown when the link is shared (WhatsApp, Facebook, Threads, X). Once the site has its own domain, change the `og:image` and `twitter:image` tags in `build.py` to the full address, for example `https://your-domain/og-image.png`, then rebuild.
+`og-image.png` is the image shown when the link is shared (WhatsApp, Facebook, Threads, X). Link previews need full addresses, so `build.py` has `SITE_URL` (now `https://nyleworks.github.io/DAJU/`). If the site moves to its own domain, change `SITE_URL` and rebuild.
+
+Images get `?v=<hash>` added at build time, so a replaced photo shows up straight away instead of a cached old one.
 
 ## Still placeholders
 
-Prices (except Matcha of the Week, RM8.99), social handles and the WhatsApp number.
+- Prices (except Matcha of the Week, RM8.99): `price: null` in `MENU`, `src/app.js`.
+- Instagram and TikTok: fill in `SOCIAL` at the top of `src/app.js` (until then the footer shows plain text, not a link).

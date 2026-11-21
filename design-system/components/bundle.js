@@ -41,9 +41,9 @@
   /* ---------- Brand ---------- */
   function Wordmark(p) {
     var size = p.size || 'md';
-    return h('span', { className: cx('dj-wordmark', 'dj-wordmark-' + size, p.className), role: 'img', 'aria-label': 'DA JU Matcha' },
+    return h('span', { className: cx('dj-wordmark', 'dj-wordmark-' + size, p.className), role: 'img', 'aria-label': p.sub ? 'DA JU Matcha' : 'DA JU' },
       h('span', { className: 'dj-wm-main', 'aria-hidden': true }, 'DA', h('span', { className: 'dj-wm-bar' }), 'JU'),
-      p.sub === false ? null : h('span', { className: 'dj-wm-sub', 'aria-hidden': true }, 'Matcha'));
+      p.sub ? h('span', { className: 'dj-wm-sub', 'aria-hidden': true }, 'Matcha') : null);
   }
   function StickerHeadline(p) {
     var Tag = p.as || 'h2';
@@ -75,7 +75,7 @@
       p.status ? h('div', { className: 'dj-nav-status' }, h(StatusPill, p.status)) : h('span'),
       h('nav', { className: 'dj-nav-right', 'aria-label': 'Sections' },
         h('ul', { className: 'dj-nav-links' }, links.map(function (l) { return h('li', { key: l.label }, h('a', { href: l.href }, l.label)); })),
-        h('button', { type: 'button', className: 'dj-bag', onClick: p.onBag, 'aria-label': 'Order bag, ' + (p.bagCount || 0) + ' items' },
+        h('button', { type: 'button', className: 'dj-bag', onClick: p.onBag, 'aria-label': 'Order bag, ' + (p.bagCount || 0) + ((p.bagCount || 0) === 1 ? ' item' : ' items') },
           h(Doodle, { name: 'bag', size: 22 }), h('span', { className: 'dj-bag-count' }, p.bagCount || 0))));
   }
   function CheckoutBar(p) {
@@ -122,17 +122,17 @@
   }
   function FeeAck(p) {
     var st = useControlled(p.checked, !!p.defaultChecked, p.onChange), on = st[0], set = st[1];
-    var id = useId('fee');
+    var id = useId('fee'), errId = id + '-error', bad = p.error && !on;
     return h('div', { className: cx('dj-fee', p.error && !on && 'is-invalid', p.className) },
       h('p', { className: 'dj-fee-note' }, '*Delivery fee is borne by customer.'),
       h('label', { className: 'dj-check', htmlFor: id },
-        h('input', { id: id, type: 'checkbox', checked: on, onChange: function (e) { set(e.target.checked); }, 'aria-invalid': p.error && !on ? true : undefined }),
+        h('input', { id: id, type: 'checkbox', checked: on, onChange: function (e) { set(e.target.checked); }, 'aria-invalid': bad ? true : undefined, 'aria-describedby': bad ? errId : undefined }),
         h('span', { className: 'dj-check-box', 'aria-hidden': true }, h('svg', { viewBox: '0 0 16 16', width: 14, height: 14 }, h('path', { d: 'M3 8.5l3.2 3L13 4.5', fill: 'none', stroke: 'currentColor', strokeWidth: 2.4, strokeLinecap: 'round', strokeLinejoin: 'round' }))),
         h('span', null, 'I understand that the Grab Express delivery fee is borne by the customer.')),
-      p.error && !on ? h('p', { className: 'dj-field-error' }, h(Doodle, { name: 'sparkle', size: 16 }), 'Please tick this to send a Grab Express order.') : null);
+      bad ? h('p', { id: errId, className: 'dj-field-error' }, h(Doodle, { name: 'sparkle', size: 16 }), 'Please tick this to send a Grab Express order.') : null);
   }
   function ZonePicker(p) {
-    var st = useControlled(p.value, p.defaultValue, p.onChange), val = st[0], set = st[1];
+    var st = useControlled(p.value === undefined && 'value' in p ? null : p.value, p.defaultValue, p.onChange), val = st[0], set = st[1];
     var opts = codZones.map(function (z) { return { value: z, label: z }; }).concat([{ value: 'OTHER', label: 'Somewhere else' }]);
     return h('div', { className: cx('dj-zones', p.className) },
       h(ChoicePills, { label: p.label || 'COD delivery area', options: opts, value: val === undefined ? null : val, onChange: set }),
@@ -145,9 +145,12 @@
   function CupPreview(p) {
     var layers = p.layers == null ? 5 : p.layers;
     var charm = p.charm || 'butterfly';
-    var name = (p.name == null ? 'DA JU' : String(p.name)).slice(0, 14).trim();
+    var name = (p.name == null ? 'DA JU' : String(p.name).trim()).slice(0, 14).trim();
+    var deco = p.alt === '';   /* alt="" means decorative: hide it from screen readers */
     var words = name.split(/\s+/), lines = name.length > 4 && words.length > 1 ? [words.slice(0, Math.ceil(words.length / 2)).join(' '), words.slice(Math.ceil(words.length / 2)).join(' ')] : [name];
-    var fs = Math.max(18, Math.min(40, 132 / (0.7 * Math.max.apply(null, lines.map(function (l) { return l.length || 1; })))));
+    var longest = Math.max.apply(null, lines.map(function (l) { return l.length || 1; }));
+    var fs = Math.max(18, Math.min(40, 132 / (0.7 * longest)));
+    var squeeze = longest * fs * 0.7 > 118 ? 118 : null;   /* long names are squeezed to fit inside the cup */
     var cid = useId('cup');
     var cup = 'M34 52 L54 246 Q100 254 146 246 L166 52 Z';
     function fly(x, y, r, cls, k) {
@@ -156,7 +159,7 @@
         h('path', { d: 'M0 -6v18', className: 'dj-cup-fly-body' }));
     }
     return h('figure', { className: cx('dj-cup', p.className), style: { width: p.width || 220 } },
-      h('svg', { viewBox: '0 0 200 270', role: 'img', 'aria-label': p.alt || ('Illustrated iced matcha cup' + (name ? ' with "' + name + '" written on it' : '') + (charm !== 'none' ? ', decorated with ' + (charm === 'ribbon' ? 'a pink ribbon' : charm === 'both' ? 'a ribbon and butterfly charms' : 'butterfly charms') : '')) },
+      h('svg', deco ? { viewBox: '0 0 200 270', 'aria-hidden': true, focusable: 'false' } : { viewBox: '0 0 200 270', role: 'img', 'aria-label': p.alt || ('Illustrated iced matcha cup' + (name ? ' with "' + name + '" written on it' : '') + (charm !== 'none' ? ', decorated with ' + (charm === 'ribbon' ? 'a pink ribbon' : charm === 'both' ? 'a ribbon and butterfly charms' : 'butterfly charms') : '')) },
         h('defs', null, h('clipPath', { id: cid }, h('path', { d: cup }))),
         h('g', { clipPath: 'url(#' + cid + ')' },
           h('rect', { className: 'dj-cup-clear', x: 0, y: 40, width: 200, height: 232 }),
@@ -172,8 +175,8 @@
             h('rect', { x: 74, y: 98, width: 26, height: 24, rx: 6, transform: 'rotate(14 87 110)', className: 'dj-cup-ice-low' })) : null),
         h('path', { className: 'dj-cup-glass', d: cup }),
         h('ellipse', { className: 'dj-cup-rim', cx: 100, cy: 52, rx: 68, ry: 7 }),
-        name ? h('text', { className: 'dj-cup-name', x: 100, y: lines.length > 1 ? 172 : 190, textAnchor: 'middle', fontSize: fs, transform: 'rotate(-5 100 180)' },
-          lines.map(function (l, i) { return h('tspan', { key: i, x: 100, dy: i ? fs * 1.05 : 0 }, l); })) : null,
+        name ? h('g', { clipPath: 'url(#' + cid + ')' }, h('text', { className: 'dj-cup-name', x: 100, y: lines.length > 1 ? 172 : 190, textAnchor: 'middle', fontSize: fs, transform: 'rotate(-5 100 180)' },
+          lines.map(function (l, i) { return h('tspan', { key: i, x: 100, dy: i ? fs * 1.05 : 0, textLength: squeeze && l.length === longest ? squeeze : undefined, lengthAdjust: squeeze ? 'spacingAndGlyphs' : undefined }, l); }))) : null,
         layers >= 5 && (charm === 'ribbon' || charm === 'both') ? h('g', { className: 'dj-cup-bow', transform: 'translate(100 118)' },
           h('path', { d: 'M0 0c-10-11-27-14-27-3s17 11 27 3z M0 0c10-11 27-14 27-3s-17 11-27 3z' }),
           h('path', { className: 'dj-cup-bow-tail', d: 'M-2 3l-12 34 M2 3l12 34' }),
@@ -279,12 +282,30 @@
       p.actions ? h('div', { className: 'dj-tk-actions' }, p.actions) : null);
   }
   function Drawer(p) {
-    var ref = useRef(null);
+    var ref = useRef(null), closeRef = useRef(p.onClose);
+    closeRef.current = p.onClose;
     useEffect(function () {
       if (!p.open || p.inline) return;
+      var opener = document.activeElement;   /* focus goes back here when the drawer closes */
       var el = ref.current; if (el) { var f = el.querySelector('button, [href], input, select, textarea'); if (f) f.focus(); }
-      function onKey(e) { if (e.key === 'Escape' && p.onClose) p.onClose(); }
-      document.addEventListener('keydown', onKey); return function () { document.removeEventListener('keydown', onKey); };
+      function focusables() {
+        return el ? Array.prototype.filter.call(el.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'),
+          function (n) { return n.offsetParent !== null || n === document.activeElement; }) : [];
+      }
+      function onKey(e) {
+        if (e.key === 'Escape' && closeRef.current) { closeRef.current(); return; }
+        if (e.key !== 'Tab' || !el) return;
+        var list = focusables(); if (!list.length) { e.preventDefault(); return; }
+        var first = list[0], last = list[list.length - 1], a = document.activeElement;
+        if (!el.contains(a)) { e.preventDefault(); first.focus(); }
+        else if (e.shiftKey && a === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && a === last) { e.preventDefault(); first.focus(); }
+      }
+      document.addEventListener('keydown', onKey);
+      return function () {
+        document.removeEventListener('keydown', onKey);
+        if (opener && opener.focus && document.contains(opener)) { try { opener.focus({ preventScroll: true }); } catch (e) { opener.focus(); } }
+      };
     }, [p.open, p.inline]);
     if (!p.open && !p.inline) return null;
     var panel = h('div', { ref: ref, className: cx('dj-drawer', 'dj-drawer-' + (p.side || 'right'), p.inline && 'dj-drawer-inline', p.className), role: 'dialog', 'aria-modal': p.inline ? undefined : true, 'aria-label': p.title },
@@ -294,7 +315,7 @@
         h('button', { type: 'button', className: 'dj-drawer-close', onClick: p.onClose, 'aria-label': 'Close' }, h('svg', { viewBox: '0 0 24 24', width: 20, height: 20 }, h('path', { d: 'M6 6l12 12M18 6L6 18', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round' })))),
       h('div', { className: 'dj-drawer-body' }, p.children),
       p.footer ? h('div', { className: 'dj-drawer-foot' }, p.footer) : null);
-    return p.inline ? panel : h('div', { className: 'dj-drawer-scrim', onClick: function (e) { if (e.target === e.currentTarget && p.onClose) p.onClose(); } }, panel);
+    return p.inline ? panel : h('div', { className: cx('dj-drawer-scrim', 'dj-drawer-scrim-' + (p.side || 'right')), onClick: function (e) { if (e.target === e.currentTarget && p.onClose) p.onClose(); } }, panel);
   }
 
   var api = { Wordmark: Wordmark, StickerHeadline: StickerHeadline, SpeechBubble: SpeechBubble, Doodle: Doodle, Stamp: Stamp, NavBar: NavBar, StatusPill: StatusPill, CheckoutBar: CheckoutBar,
