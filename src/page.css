@@ -725,3 +725,432 @@ html.story-snap { scroll-snap-type: y mandatory; }
 .custom-qty { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .popup-pick { display: flex; flex-direction: column; gap: 8px; }
 .noscript-card { max-width: 460px; margin: 48px auto; padding: 24px; border: 2px solid #163a1e; border-radius: 18px; font-family: system-ui, sans-serif; text-align: center; }
+
+/* ================= Page-by-page layout (Home / Menu / Visit) ================= */
+/* Image placeholders: real photos go back in later */
+.ph { position: relative; width: 100%; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 12px; border-radius: var(--radius-md); background: repeating-linear-gradient(135deg, var(--surface-tint) 0 12px, var(--surface) 12px 24px); border: 2px dashed var(--line-strong); color: var(--text-muted); font: 600 12px/16px var(--font-sans); text-align: center; letter-spacing: .02em; }
+.ph span { max-width: 22ch; }
+[data-theme="forest"] .ph { background: repeating-linear-gradient(135deg, var(--surface-tint) 0 12px, var(--surface-raised) 12px 24px); }
+
+/* Top bar */
+.fx-head { position: sticky; top: 0; z-index: var(--layer-nav, 40); padding-top: env(safe-area-inset-top, 0px); background: var(--surface); border-bottom: 1px solid var(--line); }
+.fx-head-row { max-width: 1200px; margin: 0 auto; height: 60px; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); display: flex; align-items: center; gap: 16px; }
+.fx-brand { display: inline-flex; color: var(--heading); text-decoration: none; }
+.fx-links { display: none; gap: 4px; margin-left: auto; }
+.fx-links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: var(--radius-pill); color: var(--text); font: 700 15px/20px var(--font-sans); text-decoration: none; transition: background-color .15s ease, color .15s ease; }
+.fx-links a:hover { background: var(--surface-tint); }
+.fx-links a.is-on { background: var(--heading); color: var(--surface); }
+.fx-order { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 8px 0 16px; border: 2px solid var(--heading); border-radius: var(--radius-pill); background: var(--heading); color: var(--surface); font: 700 15px/20px var(--font-sans); cursor: pointer; box-shadow: var(--shadow-sticker); transition: transform .15s ease, box-shadow .15s ease; }
+.fx-order:active { transform: translate(2px, 2px); box-shadow: none; }
+.fx-order-n { min-width: 26px; height: 26px; padding: 0 7px; box-sizing: border-box; border-radius: 13px; background: var(--color-ribbon); color: var(--color-forest); font-size: 13px; line-height: 26px; text-align: center; font-variant-numeric: tabular-nums; }
+.fx-order:focus-visible, .fx-links a:focus-visible, .fx-brand:focus-visible { outline: 3px solid var(--focus, var(--active)); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { .fx-page { animation: fxPage .26s cubic-bezier(.2,.8,.2,1) both; } }
+@keyframes fxPage { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.fx-tabbar { grid-template-columns: repeat(4, 1fr); }
+
+/* Shared bits */
+.fx-eyebrow { margin: 0; font: 700 12px/16px var(--font-sans); letter-spacing: .16em; text-transform: uppercase; color: var(--text-muted); }
+.fx-sec-head { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; margin-bottom: 28px; }
+.fx-center { display: flex; justify-content: center; margin-top: 28px; }
+.fx-script-title { margin: 0; font-family: var(--font-script); font-weight: 400; font-size: clamp(38px, 9vw, 56px); line-height: 1.05; color: var(--heading); }
+
+/* Home: hero (copy, then one big photo) */
+.fx-hero { padding-block: 28px 44px; }
+.fx-hero .hero-grid { gap: 28px; }
+.fx-hero-flavor { margin: -6px 0 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; color: var(--heading); }
+.fx-hero-flavor .editorial-md { text-transform: uppercase; letter-spacing: .32em; }
+.fx-hero-flavor .flavor-script { margin: 0; font-family: var(--font-script); font-size: clamp(40px, 11vw, 64px); line-height: 1; color: var(--color-seasalt); }
+.fx-hero-media { position: relative; width: 100%; max-width: 460px; margin-inline: auto; }
+.fx-hero-ph { border-radius: var(--radius-lg, 24px); }
+.fx-hero-stamp { position: absolute; top: 14px; left: -6px; }
+.fx-hero-whisk { position: absolute; right: -8px; bottom: -22px; color: var(--doodle); pointer-events: none; }
+
+/* Home: ticker strip */
+.fx-ticker { background: var(--surface); color: var(--text); border-block: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.fx-ticker::-webkit-scrollbar { display: none; }
+.fx-ticker-row { display: flex; align-items: center; justify-content: center; gap: 14px; width: max-content; min-width: 100%; box-sizing: border-box; padding: 14px 16px; font: 700 13px/18px var(--font-sans); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
+.fx-ticker-dot { display: inline-flex; color: var(--doodle); }
+
+/* Home: cup story sits as a normal section */
+.assembly:not(.is-pinned) { background: var(--surface-tint); }
+.watercolor-ph { position: absolute; inset: 6% -8%; border-radius: 50%; background: radial-gradient(closest-side, var(--color-foam), transparent); opacity: .9; }
+
+/* Home: the lineup (photo, name, short note, price) */
+.fx-lineup-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 14px; }
+.fx-pour { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.fx-pour-media { position: relative; }
+.fx-pour-stamp { position: absolute; top: 8px; right: 6px; transform-origin: top right; scale: .8; }
+.fx-pour-body { display: flex; flex-direction: column; gap: 3px; }
+.fx-pour-cat { margin: 0; font: 700 11px/14px var(--font-sans); letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
+.fx-pour-name { margin: 0; font: 700 17px/22px var(--font-sans); color: var(--heading); }
+.fx-pour-note { margin: 0; font-size: 14px; line-height: 20px; color: var(--text-muted); }
+.fx-pour-price { margin: 2px 0 0; font: 700 15px/20px var(--font-mono); color: var(--heading); }
+
+/* Home: follow us */
+.fx-follow-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.fx-follow-grid .ph { border-radius: var(--radius-md); }
+.fx-follow-links { flex-wrap: wrap; gap: 10px 20px; align-items: center; }
+
+/* Home: order-ahead band */
+.fx-skip-row { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+.fx-skip-text { margin: 0; font-family: var(--font-display, inherit); font-size: clamp(26px, 6.4vw, 40px); line-height: 1.15; color: var(--heading); max-width: 22ch; }
+
+/* Menu page: grid instead of a swipe row */
+.fx-menu { padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+.fx-menu-head { margin-bottom: 24px; }
+.fx-menu-head .menu-tabs { margin-top: 6px; }
+.fx-menu-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; }
+.fx-menu-card, .fx-menu-card .dj-card { width: 100%; }
+.fx-menu-card .dj-card { transform: none; }
+.fx-menu-card .dj-card-art { width: 100%; height: 100%; padding: 12px; box-sizing: border-box; }
+.fx-menu-card .dj-card-art .ph { height: 100%; }
+.fx-menu-card .coming { min-height: 260px; }
+
+/* Visit page: contact card */
+.fx-contact { background: var(--surface-tint); }
+.fx-contact-grid { display: flex; flex-direction: column; gap: 8px; }
+.fx-contact-card { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; padding: 24px; border: var(--stroke-sticker, 2px) solid var(--heading); border-radius: var(--radius-md); background: var(--surface-raised); box-shadow: var(--shadow-sticker); color: var(--heading); }
+.fx-contact-big { margin: 0; font: 700 22px/28px var(--font-sans); }
+.fx-contact-big a { color: var(--heading); text-underline-offset: 4px; }
+.fx-contact-btns { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Footer: brand, then two link columns */
+.fx-foot-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 28px 20px; }
+.fx-foot-brand { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; align-items: flex-start; }
+.fx-foot .fx-foot-col { display: flex; flex-direction: column; gap: 0; }
+.fx-foot-h { margin: 0 0 4px; font: 700 12px/16px var(--font-sans); letter-spacing: .16em; text-transform: uppercase; color: var(--text-muted); }
+.fx-foot-col a, .fx-foot-col .foot-soon { display: inline-flex; align-items: center; min-height: 44px; color: var(--text); text-decoration-color: var(--line-strong); text-underline-offset: 4px; }
+.fx-foot-note { max-width: 1200px; margin: 32px auto 0; }
+
+@media (min-width: 721px) {
+  .fx-links { display: flex; }
+  .fx-order { margin-left: 8px; }
+  .fx-head-row { height: 68px; }
+  html { scroll-padding-top: 80px; }
+  .fx-hero .hero-grid { flex-direction: row; align-items: center; gap: 56px; }
+  .fx-hero .hero-copy { flex: 1 1 0; }
+  .fx-hero-media { flex: 0 1 440px; }
+  .fx-lineup-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 24px; }
+  .fx-follow-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-flow: dense; }
+  .fx-follow-grid .ph:nth-child(-n+2) { grid-row: span 2; }
+  .fx-skip-row { flex-direction: row; justify-content: space-between; align-items: center; }
+  .fx-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+  .fx-contact-grid { display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 40px; }
+  .fx-foot-grid { grid-template-columns: 2fr 1fr 1fr; }
+  .fx-foot-brand { grid-column: auto; }
+}
+@media (min-width: 1000px) {
+  .fx-lineup-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 24px 18px; }
+  .fx-menu-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .fx-hero .hero-cup { order: 0; }
+  .fx-ticker-row { width: auto; flex-wrap: wrap; white-space: normal; text-align: center; gap: 6px 12px; font-size: 12px; }
+}
+.fx-hero .hero-actions { align-items: center; }
+@media (min-width: 900px) {
+  /* the "What is Matcha of the Week?" cards sit in a row of three, like value blocks */
+  .assembly:not(.is-pinned) .assembly-stage { max-width: 1100px; }
+  .assembly:not(.is-pinned) .motw-static { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; gap: 28px 24px; }
+  .assembly:not(.is-pinned) .motw-static .motw-title-card, .assembly:not(.is-pinned) .motw-static .motw-boom { grid-column: 1 / -1; justify-self: center; width: min(420px, 100%); }
+  .assembly:not(.is-pinned) .motw-static .motw-boom { width: 100%; }
+}
+
+/* ---- Button labels always stay on one line ---- */
+button, .dj-btn, .dj-pill, .menu-tab, .fx-order, .chip-btn, .station-bar, .tab { white-space: nowrap; }
+/* drink picker: name (and a small tag for the weekly or sold-out drink) side by side */
+.drink-chip-text { flex-direction: row; align-items: center; gap: 8px; }
+.drink-chip-name, .drink-chip-cat { white-space: nowrap !important; }
+.drink-chip-cat { padding: 1px 8px; border-radius: var(--radius-pill); background: var(--surface-tint); color: var(--heading); font-weight: 700; font-size: 11px; }
+@media (min-width: 721px) {
+  .drink-pick { display: flex; flex-wrap: wrap; }
+  .drink-chip { flex: 0 0 auto; }
+}
+/* cup flair: icon beside the label, pills sized to their text */
+.mode-pills .dj-pills-row { display: flex; flex-wrap: wrap; }
+.mode-pills .dj-pill { flex: 1 0 auto; flex-direction: row; min-height: 48px; padding: 0 14px; border-radius: var(--radius-pill); font-size: 14px; }
+.mode-pills .dj-pill .dj-doodle { width: 20px; height: 20px; }
+@media (max-width: 360px) {
+  .dj-btn-lg { padding-inline: 18px; font-size: 16px; }
+  .full-seg .dj-pill, .dj-pill { padding-inline: 12px; }
+}
+@media (max-width: 400px) {
+  .details-form .dj-btn-lg { padding-inline: 12px; font-size: 15px; gap: 6px; }
+}
+@media (max-width: 360px) {
+  .full-seg .dj-pill { padding-inline: 8px; font-size: 13px; }
+}
+@media (max-width: 340px) {
+  .details-form .dj-btn-lg, .popup-btns .dj-btn { padding-inline: 10px; font-size: 14px; }
+  .details-form .dj-btn-lg .dj-doodle, .popup-btns .dj-btn .dj-doodle { display: none; }
+  .full-seg .dj-pill { padding-inline: 6px; font-size: 12.5px; }
+}
+/* Home: customer posts, one sideways-scrolling row */
+.fx-follow { padding-inline: 0; }
+.fx-follow > .wrap { padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); }
+.fx-follow .fx-sec-head { margin-bottom: 20px; }
+.fx-follow-row { display: flex; gap: 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; padding: 4px max(16px, calc((100vw - 1200px) / 2)) 12px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.fx-follow-row::-webkit-scrollbar { display: none; }
+.fx-follow-item { flex: none; width: min(62vw, 240px); scroll-snap-align: start; }
+.fx-follow-item .ph { border-radius: var(--radius-md); }
+.fx-follow .fx-center { margin-top: 16px; }
+.fx-follow-row { --edge: max(16px, calc((100vw - 1200px) / 2)); padding-inline: var(--edge); scroll-padding-inline: var(--edge); }
+/* Order-ahead band: a dark card on the light page, so it no longer runs into the dark footer */
+.fx-skip { padding-block: 8px 56px; }
+.fx-skip-row { box-sizing: border-box; padding: 28px 22px; border-radius: var(--radius-lg, 24px); background: var(--surface); color: var(--text); box-shadow: var(--shadow-sticker); }
+@media (min-width: 721px) { .fx-skip { padding-block: 16px 80px; } .fx-skip-row { padding: 40px 48px; } }
+.fx-follow { padding-bottom: 32px; }
+@media (min-width: 721px) { .fx-follow { padding-bottom: 48px; } }
+/* Footer, minimal: logo, tagline, three links, one line of service areas */
+.fx-foot { padding-block: 40px calc(28px + var(--bottom-ui, 0px) * 0); }
+.fx-foot-min { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
+.fx-foot-min .script { font-size: 24px; }
+.fx-foot nav.fx-foot-links { display: flex; justify-content: center; gap: 4px 24px; flex-wrap: wrap; margin-top: 4px; }
+.fx-foot-links a, .fx-foot-links .foot-soon { display: inline-flex; align-items: center; min-height: 44px; color: var(--text); text-decoration-color: var(--line-strong); text-underline-offset: 4px; }
+.fx-foot-min .fx-foot-note { margin: 6px 0 0; max-width: 34ch; }
+/* Phones: cards slide out from under the title card with the scroll (transforms set in StoryStack) */
+.motw-spread { display: flex; flex-direction: column; gap: 16px; width: 100%; }
+.motw-spread-card { position: relative; transform-origin: 50% 0; will-change: transform; }
+@media (max-width: 720px) {
+  .assembly:not(.is-pinned) .assembly-stick { padding-block: 32px 24px; }
+  .assembly:not(.is-pinned) .motw-static { gap: 16px; margin-top: 12px; }
+  .assembly:not(.is-pinned) .motw-title-card { padding: 18px 16px; }
+  .assembly:not(.is-pinned) .motw-static .motw-boom { height: 130px; }
+}
+/* the RM8.99 tag bursts in once all three cards are open (phones) */
+.motw-spread-card .motw-title-card { box-shadow: var(--shadow-sticker); }
+.motw-pop-tag .motw-boom { overflow: visible; }
+.motw-pop-tag .boom-rays, .motw-pop-tag .boom-sparks { display: block; position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.motw-pop-tag .motw-boom:not(.is-on) .price-tag { opacity: 0; }
+.motw-pop-tag .motw-boom.is-on .price-tag { animation: tagZoom .7s cubic-bezier(.2, 1.6, .4, 1) both !important; }
+@media (prefers-reduced-motion: reduce) { .motw-pop-tag .motw-boom.is-on .price-tag { animation: none !important; } .motw-pop-tag .boom-rays, .motw-pop-tag .boom-sparks { display: none; } }
+/* a bit more room between the RM8.99 tag and the next section */
+.assembly:not(.is-pinned) .assembly-stick { padding-bottom: 56px; }
+@media (min-width: 721px) { .assembly:not(.is-pinned) .assembly-stick { padding-bottom: 104px; } }
+.assembly:not(.is-pinned) .motw-static .motw-boom { height: 130px; }
+@media (max-width: 720px) { .assembly:not(.is-pinned) .motw-static .motw-boom { height: 104px; } }
+/* room between the last card and the RM8.99 tag */
+.assembly:not(.is-pinned) .motw-static .motw-boom { margin-top: 56px; }
+@media (max-width: 720px) { .assembly:not(.is-pinned) .motw-static .motw-boom { margin-top: 24px; } }
+/* phones: the big tag flies out of card 3's "RM8.99" (animated in StoryStack), then the burst fires where it lands */
+.motw-pop-tag .motw-boom.is-on .price-tag { animation: none !important; opacity: 1; }
+.motw-pop-tag .motw-boom.is-on .boom-rays i { animation-delay: .42s !important; }
+.motw-pop-tag .motw-boom.is-on .boom-sparks i { animation-delay: .4s !important; }
+.motw-price-inline { display: inline-block; transition: transform .2s ease; }
+.motw-price-inline.is-launch { transform: scale(1.25); }
+.motw-pop-tag { position: relative; z-index: 10; }
+.motw-price-inline.is-launch { transform: scale(1.12); }
+
+/* Home: best sellers, zig-zag rows (photo left / text right, then flipped) */
+.fx-zig { display: flex; flex-direction: column; gap: 28px; }
+.fx-zig-row { display: grid; grid-template-columns: minmax(0, 44%) minmax(0, 1fr); align-items: center; gap: 16px; }
+.fx-zig-row.is-flip .fx-zig-media { order: 2; }
+.fx-zig-media { position: relative; }
+.fx-zig-stamp { position: absolute; top: -10px; left: -6px; transform-origin: top left; scale: .72; }
+.fx-zig-row.is-flip .fx-zig-stamp { left: auto; right: -6px; transform-origin: top right; }
+.fx-zig-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.fx-zig-name { margin: 0; font: 700 19px/24px var(--font-sans); color: var(--heading); }
+.fx-zig-note { margin: 0; font-size: 14px; line-height: 20px; color: var(--text-muted); }
+.fx-zig-price { margin: 2px 0 0; font: 700 16px/20px var(--font-mono); color: var(--heading); }
+@media (min-width: 721px) {
+  .fx-zig { gap: 48px; max-width: 920px; margin-inline: auto; }
+  .fx-zig-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; }
+  .fx-zig-stamp { scale: 1; }
+  .fx-zig-name { font-size: 28px; line-height: 34px; }
+  .fx-zig-note { font-size: 17px; line-height: 26px; max-width: 34ch; }
+  .fx-zig-price { font-size: 20px; line-height: 26px; }
+}
+
+/* Menu page: 2 columns on phones, 4 on desktop, compact cards */
+.fx-menu-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.fx-menu-card .dj-card-media { height: auto; aspect-ratio: 1 / 1; }
+.fx-menu-card .dj-card-art { padding: 8px; }
+.fx-menu-card .dj-card-body { padding: 12px; gap: 4px; }
+.fx-menu-card .dj-card-name { font-size: 15px; line-height: 20px; }
+.fx-menu-card .dj-card-note { font-size: 13px; line-height: 18px; }
+.fx-menu-card .dj-card-foot { flex-direction: column; align-items: stretch; gap: 8px; }
+.fx-menu-card .dj-card-price { font-size: 15px; }
+.fx-menu-card .dj-card-foot .dj-btn { width: 100%; padding-inline: 8px; font-size: 13px; min-height: 40px; }
+.fx-menu-card .dj-card-foot .dj-btn .dj-doodle { display: none; }
+.fx-menu-card .dj-card-stamp { transform-origin: top right; scale: .7; }
+.fx-menu-card .coming { min-height: 100%; padding: 16px; }
+.fx-menu-card .coming .script { font-size: 26px; }
+@media (min-width: 721px) {
+  .fx-menu-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
+  .fx-menu-card .dj-card-body { padding: 16px; }
+  .fx-menu-card .dj-card-name { font-size: 17px; line-height: 22px; }
+  .fx-menu-card .dj-card-foot .dj-btn { font-size: 14px; }
+  .fx-menu-card .dj-card-foot .dj-btn .dj-doodle { display: inline-block; }
+}
+@media (min-width: 1000px) { .fx-menu-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.fx-menu-grid { align-items: stretch; }
+.fx-menu-card { display: flex; }
+.fx-menu-card > * { flex: 1; }
+.fx-menu-card .dj-card-body { flex: 1; }
+.fx-menu-card .dj-card-foot { margin-top: auto; }
+/* "New menu to come..." card: own row, always centred, same width as one card */
+.fx-menu-grid .coming-wrap.fx-menu-card { grid-column: 1 / -1; justify-self: center; width: calc((100% - 14px) / 2); }
+.fx-menu-card .coming { min-height: 120px; justify-content: center; }
+@media (min-width: 721px) { .fx-menu-grid .coming-wrap.fx-menu-card { width: calc((100% - 66px) / 4); } }
+/* Phones: hero buttons move to the bottom of the section, under the photo */
+@media (max-width: 720px) {
+  .fx-hero .hero-copy { display: contents; }
+  .fx-hero .hero-grid { gap: 18px; }
+  .fx-hero .hero-copy > h1 { order: 1; }
+  .fx-hero .fx-hero-flavor { order: 2; }
+  .fx-hero .hero-cup { order: 3; margin-top: 10px; }
+  .fx-hero .hero-actions { order: 4; margin-top: 10px; }
+}
+/* Ticker: endless horizontal carousel */
+.fx-ticker { overflow: hidden; }
+.fx-ticker-track { display: flex; width: max-content; animation: fx-ticker 28s linear infinite; }
+.fx-ticker:hover .fx-ticker-track { animation-play-state: paused; }
+.fx-ticker-set { display: flex; align-items: center; gap: 14px; padding: 14px 7px; font: 700 13px/18px var(--font-sans); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; }
+@keyframes fx-ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (max-width: 720px) { .fx-ticker-set { font-size: 12px; padding-block: 12px; } .fx-ticker-track { animation-duration: 22s; } }
+@media (prefers-reduced-motion: reduce) {
+  .fx-ticker { overflow-x: auto; scrollbar-width: none; }
+  .fx-ticker-track { animation: none; }
+}
+.fx-ticker-set .fx-ticker-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .7; flex: none; }
+
+/* Static doodle background on every light (white) part of the page.
+   The drawings are baked into one see-through tile (bg-doodles.webp, ~22% strength) that repeats behind
+   the content; dark-green sections keep their solid colour and cover it. */
+body { background-color: #fdfbf7; background-image: url("bg-doodles.webp"); background-repeat: repeat; background-size: 800px 800px; background-position: center top; }
+@media (max-width: 720px) { body { background-size: 520px 520px; } }
+#assembly, .fx-lineup, .fx-follow, .fx-skip, main > section:not([data-theme]) { background-color: transparent; }
+/* Order ticket: no solid panel behind it, so the doodle background shows through */
+.signoff-ticket, .signoff-ticket { background: transparent; padding-inline: 0; }
+@media (min-width: 721px) { .signoff-ticket { padding: 24px 0; } }
+/* How to order: no dashed route line down the side (and no icons riding on it); cards use the full width */
+.route, .route.is-focused { border-left: 0; padding-left: 0; margin-left: 0; }
+.route .station-icon, .route .rider, .route .rider { display: none !important; }
+/* Top bar slides away while scrolling down, back on a small scroll up (both phone and desktop) */
+.fx-head { transition: transform .24s cubic-bezier(.2,.8,.2,1); will-change: transform; }
+.fx-head.is-hidden { transform: translateY(-100%); }
+.fx-head:focus-within { transform: none; }
+@media (prefers-reduced-motion: reduce) { .fx-head { transition: none; } }
+/* Bottom tab bar: Home / Menu / Visit only (the Bag stays top right) */
+.fx-tabbar { grid-template-columns: repeat(3, 1fr); }
+/* Top bar: logo in the centre (page links on the left on desktop, Bag on the right) */
+.fx-head-row { display: grid; grid-template-columns: 1fr auto 1fr; }
+.fx-head-row .fx-links { grid-column: 1; grid-row: 1; justify-self: start; margin-left: -14px; }
+.fx-head-row .fx-brand { grid-column: 2; grid-row: 1; justify-self: center; }
+.fx-head-row .fx-order { grid-column: 3; grid-row: 1; justify-self: end; margin-left: 0; }
+.fx-head-row { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+@media (max-width: 370px) { .fx-order > span:not(.fx-order-n) { display: none; } .fx-order { padding-left: 12px; gap: 6px; } }
+/* Order ticket: outlined status pill and receipt. The receipt's scalloped edge comes from a mask,
+   so its outline is drawn with drop-shadows on the wrapper, which follow the scallops. */
+.ticket-state { border: 2px solid var(--heading); border-radius: var(--radius-pill); }
+.ticket-live { filter: drop-shadow(2px 0 0 var(--heading)) drop-shadow(-2px 0 0 var(--heading)) drop-shadow(0 2px 0 var(--heading)) drop-shadow(0 -2px 0 var(--heading)); }
+
+/* ===== Button colours: beige + pink, with white used sparingly =====
+   Pink  = the main action in a spot (Customize & add, Add to bag, Choose…, Save details, See the full menu).
+   Beige = everything else (Bag, menu-card buttons, tabs, chips, page links, "Switch" bars).
+   White = only a few quiet secondary buttons (How to order, Copy ticket text, Change method, +/−).
+   Text and outlines stay dark green so every button reads clearly on cream or dark green. */
+:root { --btn-beige: #eadcc2; --btn-beige-hover: #e2d1b2; --btn-pink: #f4b6c2; --btn-pink-hover: #f0a6b5; --btn-white: #ffffff; --btn-ink: #163a1e; }
+
+/* pink */
+.dj-btn.dj-btn-primary, .dj-btn.dj-btn-sticker.dj-btn-lg, .chip-btn,
+[data-theme] .dj-btn.dj-btn-primary, [data-theme] .dj-btn.dj-btn-sticker.dj-btn-lg, [data-theme] .chip-btn {
+  background: var(--btn-pink); color: var(--btn-ink); border-color: var(--btn-ink); }
+@media (hover: hover) { .dj-btn.dj-btn-primary:hover, .dj-btn.dj-btn-sticker.dj-btn-lg:hover, .chip-btn:hover { background: var(--btn-pink-hover); } }
+
+/* beige */
+.fx-order, .dj-btn.dj-btn-sticker:not(.dj-btn-lg), .station-bar, .menu-tab.is-on, .drink-chip.is-on, .fx-links a.is-on,
+[data-theme] .station-bar, [data-theme] .dj-btn.dj-btn-sticker:not(.dj-btn-lg) {
+  background: var(--btn-beige); color: var(--btn-ink); border-color: var(--btn-ink); }
+@media (hover: hover) { .fx-order:hover, .dj-btn.dj-btn-sticker:not(.dj-btn-lg):hover, .station-bar:hover, .fx-links a:not(.is-on):hover, .menu-tab:not(.is-on):hover { background: var(--btn-beige-hover); } }
+.fx-order .fx-order-n { background: var(--btn-pink); color: var(--btn-ink); }
+.station-bar .station-bar-n { background: var(--btn-ink); color: var(--btn-beige); }
+.menu-tab:not(.is-on) { background: transparent; color: var(--btn-ink); border-color: var(--btn-ink); }
+.menu-tab.is-on * { color: inherit; }
+
+/* white (quiet secondary only) */
+.dj-btn.dj-btn-secondary, .back-btn, .step-btn, .drink-chip:not(.is-on),
+[data-theme] .dj-btn.dj-btn-secondary, [data-theme] .back-btn {
+  background: var(--btn-white); color: var(--btn-ink); border-color: var(--btn-ink); }
+@media (hover: hover) { .dj-btn.dj-btn-secondary:hover, .back-btn:hover { background: #f6f1e7; } }
+.drink-chip:not(.is-on) { background: transparent; }
+/* choice pills (Ice, Sweetness, Weekdays/Weekend…): picked = beige, others = no fill */
+.dj-pill, [data-theme] .dj-pill { background: transparent; color: var(--heading); border-color: currentColor; }
+.dj-pill.is-on, [data-theme] .dj-pill.is-on { background: var(--btn-beige); color: var(--btn-ink); border-color: var(--btn-ink); }
+.dj-pill.is-on small { color: var(--btn-ink); }
+.dj-pills-segmented .dj-pills-row, [data-theme] .dj-pills-segmented .dj-pills-row { background: transparent; }
+.dj-pills-segmented .dj-pill:not(.is-on) { border-color: transparent; }
+/* bottom tab bar: current page marked in beige */
+.tab.is-here::before { background: var(--btn-beige); }
+@media (max-width: 360px) { .fx-menu-card .dj-card-foot .dj-btn { font-size: 12px; padding-inline: 4px; } }
+/* Build your cup, phones: every drink visible at once (2-column grid, no sideways scrolling) */
+@media (max-width: 720px) {
+  .drink-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 0; padding: 0; overflow: visible; scroll-snap-type: none; }
+  .drink-chip { min-width: 0; min-height: 52px; padding: 6px 10px 6px 6px; gap: 8px; }
+  .drink-chip-text { flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; }
+  .drink-chip-name, .drink-chip-cat { white-space: normal !important; }
+  .drink-chip-name { font-size: 13px; line-height: 17px; }
+  .drink-chip-cat { font-size: 10px; padding: 0 6px; }
+}
+@media (max-width: 720px) {
+  .drink-chip .drink-thumb { width: 34px; height: 34px; border-radius: 8px; }
+  .drink-chip .drink-thumb .dj-cup { width: 24px !important; }
+  .drink-chip-name { overflow-wrap: anywhere; }
+  .drink-chip-cat { white-space: nowrap !important; font-size: 9.5px; letter-spacing: .01em; }
+}
+@media (max-width: 360px) { .drink-chip .drink-thumb { display: none; } .drink-chip { padding-left: 10px; } }
+/* Build your cup, desktop too: same even 2-column grid of equal-size drink tiles */
+@media (min-width: 721px) {
+  .drink-pick { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; overflow: visible; }
+  .drink-chip { flex: none; min-width: 0; min-height: 60px; height: 100%; padding: 8px 12px 8px 8px; }
+  .drink-chip-text { flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+  .drink-chip-name { white-space: normal !important; }
+  .drink-chip-cat { white-space: nowrap !important; font-size: 10.5px; }
+}
+.drink-pick { grid-auto-rows: 1fr; } .drink-chip { height: 100%; box-sizing: border-box; }
+/* Menu page: the three ordering steps, labelled the same way, and "Delivery or pickup" in the same light card as "Build your cup" */
+.fx-step { margin: 0; font: 700 12px/16px var(--font-sans); letter-spacing: .14em; text-transform: uppercase; color: var(--text-muted); }
+.fx-order-card { max-width: none; padding: 16px 16px 24px; box-sizing: border-box; border-radius: var(--radius-lg); background: var(--surface-tint); }
+.fx-order-card > * { width: 100%; max-width: 820px; margin-inline: auto; }
+.fx-order-card .route-head { color: var(--heading); gap: 6px; }
+@media (min-width: 721px) { .fx-order-card { padding: clamp(24px, 4vw, 56px); } }
+.dj-pills-segmented .dj-pill.is-on, [data-theme] .dj-pills-segmented .dj-pill.is-on { background: var(--btn-beige); color: var(--btn-ink); border-color: var(--btn-ink); }
+/* Checkout pop-up: no pink lines (header rule, bag-item edge, dashed footer rule); thin neutral lines instead */
+.checkout-drawer .dj-drawer-head { border-bottom: 1px solid var(--line); }
+.checkout-drawer .bag-item { border-left-width: 1px; border-left-color: var(--line-strong, var(--line)); }
+.checkout-drawer .dj-drawer-foot { border-top: 1px solid var(--line); }
+/* bag cup cards: the same light outline all round, no darker left edge */
+.checkout-drawer .bag-item { border: 1px solid var(--line); }
+/* Review order (checkout pop-up): pink only on the main button */
+.checkout-drawer .dj-drawer-step { background: var(--btn-beige); color: var(--btn-ink); }
+.checkout-drawer .sum-row span { background: transparent; }
+.checkout-drawer .sum-row span:last-child { background: transparent; padding: 0; }
+/* Checkout pop-up: no X button (close by tapping outside, or dragging the top down on phones) */
+.checkout-drawer .dj-drawer-close { display: none; }
+.checkout-drawer .dj-drawer-title { padding-right: 0; }
+.dj-drawer-bottom .dj-drawer-head { touch-action: none; padding-top: 28px; }
+.dj-drawer-bottom .dj-drawer-head::before { top: 10px; width: 44px; height: 5px; margin-left: -22px; }
+/* Gliding page highlight (bottom tab bar on phones, page links on desktop) */
+.glide { position: absolute; pointer-events: none; left: 0; width: var(--gw, 0); transform: translateX(var(--gx, 0)); }
+.glide-ready .glide { transition: transform .3s cubic-bezier(.2,.8,.2,1), width .3s cubic-bezier(.2,.8,.2,1); }
+.fx-tabbar .tab.is-here::before { content: none; }
+.glide-tab { top: 6px; height: 30px; display: flex; justify-content: center; }
+.glide-tab::before { content: ""; width: 44px; height: 30px; border-radius: 15px; background: var(--btn-beige); }
+.fx-links { position: relative; }
+.glide-link { top: 50%; height: 44px; margin-top: -22px; border-radius: var(--radius-pill); background: var(--btn-beige); border: 2px solid var(--btn-ink); box-sizing: border-box; }
+.fx-links a, .fx-links a.is-on { position: relative; background: transparent; border-color: transparent; color: var(--btn-ink); }
+@media (prefers-reduced-motion: reduce) { .glide-ready .glide { transition: none; } }
+/* Top-right Bag: white with the same green sticker shadow */
+.fx-order { background: #fff; }
+@media (hover: hover) { .fx-order:hover { background: #fff; } }
+/* Page switch: the new page glides in sideways, in the direction of the tab you tapped */
+html, body { overflow-x: clip; }
+@media (prefers-reduced-motion: no-preference) {
+  .fx-page.glide-in-right { animation: fxGlideR .3s cubic-bezier(.2,.8,.2,1) backwards; }
+  .fx-page.glide-in-left { animation: fxGlideL .3s cubic-bezier(.2,.8,.2,1) backwards; }
+}
+@keyframes fxGlideR { from { opacity: 0; transform: translateX(48px); } }
+@keyframes fxGlideL { from { opacity: 0; transform: translateX(-48px); } }
+/* Every pop-up: no X button (tap outside to close; on phones, drag the top down) */
+.dj-drawer-scrim .dj-drawer-close { display: none; }
+.dj-drawer-scrim .dj-drawer-title { padding-right: 0; }

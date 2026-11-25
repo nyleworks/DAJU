@@ -326,29 +326,126 @@
     <//>`;
   }
 
-  /* ---------- Ch.1 ---------- */
+  /* ---------- Image placeholder (real photos go back in later) ---------- */
+  function Ph(p) {
+    return html`<div className=${'ph' + (p.className ? ' ' + p.className : '')} role="img" aria-label=${p.label || 'Image placeholder'} style=${p.ratio ? { aspectRatio: p.ratio } : null}>
+      <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3" fill="none" stroke="currentColor" strokeWidth="1.8" /><circle cx="9" cy="10" r="2" fill="currentColor" /><path d="M4 18l5-5 4 4 3-3 4 4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" /></svg>
+</div>`;
+  }
+
+  /* ---------- Home: hero ---------- */
   function Hero(p) {
     return html`
-      <section id="drop" className="band hero" data-theme="forest" ref=${p.heroRef}>
-        <span className="hero-float desk-only" style=${{ right: '6%', top: '14%' }} aria-hidden="true"><${D.Doodle} name="sparkle" size=${28} className="draw" /></span>
-        <span className="hero-float desk-only" style=${{ left: '46%', bottom: '10%' }} aria-hidden="true"><${D.Doodle} name="arrow" size=${56} className="draw" /></span>
+      <section id="drop" className="band hero fx-hero" data-theme="forest" ref=${p.heroRef}>
         <div className="wrap hero-grid">
           <div className="hero-copy">
-            <div className="hero-doodles">
-              <${HeroWhisk} size=${p.narrow ? 190 : 260} />
-            </div>
-            <${D.StickerHeadline} as="h1" size="xl">Matcha<br />of the week?<//>
+            <${D.StickerHeadline} as="h1" size="xl">This week<br />special<//>
+            <p className="fx-hero-flavor"><span className="editorial-md">Matcha</span> <span className="flavor-script" aria-hidden="true">Blue Sea Salt</span></p>
             <div className="hero-actions">
               <${D.Button} variant="sticker" size="lg" icon="sparkle" onClick=${function () { p.onCustomize(WEEKLY); }}>Customize & add<//>
               <${D.Button} variant="secondary" size="lg" href="#order">How to order<//>
             </div>
           </div>
-          <div className="hero-cup">
-            <p className="editorial-md p0" style=${{ textTransform: 'uppercase', color: 'var(--heading)', letterSpacing: '0.32em' }}>Matcha</p>
-            <p className="flavor-script" aria-hidden="true">Blue Sea Salt</p>
-            <img className="hero-cutout" src="blue-sea-salt-cutout.webp" srcSet="blue-sea-salt-cutout-300.webp 300w, blue-sea-salt-cutout.webp 433w" sizes="(min-width: 721px) 300px, (min-width: 391px) 250px, 64vw" width="433" height="521" fetchpriority="high" alt=${PHOTO_ALT} />
-            <div style=${{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 8 }}>
-              <${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink">Matcha of the Week<//>
+          <div className="hero-cup fx-hero-media">
+            <${Ph} className="fx-hero-ph" ratio="4 / 5" text="Hero photo · Matcha Blue Sea Salt" label=${PHOTO_ALT} />
+            <${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink fx-hero-stamp">Matcha of the Week<//>
+            <div className="fx-hero-whisk" aria-hidden="true"><${HeroWhisk} size=${p.narrow ? 120 : 170} /></div>
+          </div>
+        </div>
+      </section>`;
+  }
+
+  /* ---------- Home: ticker strip ---------- */
+  function Ticker() {
+    /* A slow, endless sideways carousel. The items are rendered twice so the loop has no gap;
+       the second copy is hidden from screen readers. */
+    var items = MENU.map(function (m) { return m.name; });   /* every drink on the menu, in menu order */
+    function set(copy) {
+      return html`<div className="fx-ticker-set" aria-hidden=${copy ? 'true' : undefined}>
+        ${items.map(function (t, i) { return html`<${R.Fragment} key=${i}><span>${t}</span><span className="fx-ticker-dot" aria-hidden="true"></span><//>`; })}
+      </div>`;
+    }
+    return html`<div className="fx-ticker" data-theme="forest"><div className="fx-ticker-track">${set(false)}${set(true)}</div></div>`;
+  }
+
+  /* ---------- Home: best sellers (three drinks, zig-zag rows) ----------
+     The first row is always this week's Matcha of the Week (whichever drink has status 'weekly' in MENU),
+     followed by the next two drinks on the menu. */
+  function Lineup(p) {
+    var picks = [WEEKLY].concat(MENU.filter(function (m) { return m !== WEEKLY && m.status !== 'soldout'; })).slice(0, 3);
+    return html`
+      <section id="lineup" className="band fx-lineup" aria-labelledby="lineup-title">
+        <div className="wrap">
+          <div className="fx-sec-head">
+            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="lineup-title">Our best seller</span><//>
+          </div>
+          <div className="fx-zig">
+            ${picks.map(function (m, i) {
+              return html`<article key=${m.id} className=${'fx-zig-row' + (i % 2 ? ' is-flip' : '')}>
+                <div className="fx-zig-media">
+                  <${Ph} ratio="1 / 1" label=${m.imageAlt || ('Photo of ' + m.name)} />
+                  ${m.status === 'weekly' ? html`<${D.Stamp} tone="forest" rotate=${-4} className="stamp-pink fx-zig-stamp">Matcha of the Week<//>` : null}
+                </div>
+                <div className="fx-zig-body">
+                  <h3 className="fx-zig-name">${m.name}</h3>
+                  <p className="fx-zig-note">${m.note}</p>
+                  <p className="fx-zig-price">${m.status === 'weekly' ? WEEKLY_PRICE : priceText(m.price)}</p>
+                </div>
+              </article>`;
+            })}
+          </div>
+          <div className="fx-center"><${D.Button} variant="primary" size="lg" href="#menu">See the full menu<//></div>
+        </div>
+      </section>`;
+  }
+
+  /* ---------- Home: follow us (photo grid, placeholders for now) ---------- */
+  function Follow() {
+    var ig = SOCIAL.instagram, tt = SOCIAL.tiktok;
+    return html`
+      <section id="follow" className="band fx-follow" aria-labelledby="follow-title">
+        <div className="wrap">
+          <div className="fx-sec-head">
+            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="follow-title">From your eyes, to our page</span><//>
+          </div>
+        </div>
+        <div className="fx-follow-row" role="list" aria-label="Customer posts that tag DAJU on Instagram">
+          ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (n) { return html`<div key=${n} className="fx-follow-item" role="listitem"><${Ph} ratio="4 / 5" label=${'Customer post ' + n + ' (placeholder)'} /></div>`; })}
+        </div>
+        <div className="wrap">
+          <div className="fx-center fx-follow-links">
+            ${ig.url ? html`<${D.Button} variant="secondary" href=${ig.url} target="_blank" rel="noopener">Instagram ${ig.handle}<//>` : html`<span className="label foot-soon">Instagram ${ig.handle}</span>`}
+            ${tt.url ? html`<${D.Button} variant="secondary" href=${tt.url} target="_blank" rel="noopener">TikTok ${tt.handle}<//>` : html`<span className="label foot-soon">TikTok ${tt.handle}</span>`}
+          </div>
+        </div>
+      </section>`;
+  }
+
+  /* ---------- Home: order-ahead band ---------- */
+  function SkipBand() {
+    return html`
+      <section id="skip" className="band fx-skip" aria-label="Order ahead">
+        <div className="wrap fx-skip-row" data-theme="forest">
+          <p className="fx-skip-text">Skip the queue: build your cup now and pick it up when you visit.</p>
+          <${D.Button} variant="sticker" size="lg" icon="bag" href="#studio">Build your cup<//>
+        </div>
+      </section>`;
+  }
+
+  /* ---------- Visit: how to reach us ---------- */
+  function Contact() {
+    return html`
+      <section id="contact" className="band fx-contact" aria-labelledby="contact-title">
+        <div className="wrap fx-contact-grid">
+          <div className="fx-sec-head">
+            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="contact-title">Order on WhatsApp</span><//>
+          </div>
+          <div className="fx-contact-card">
+            <${D.Doodle} name="bag" size=${28} />
+            <p className="fx-contact-big"><a href=${'https://wa.me/' + WA_NUMBER} target="_blank" rel="noopener">WhatsApp ${WA_DISPLAY}</a></p>
+            <div className="fx-contact-btns">
+              <${D.Button} variant="primary" className="btn-pink" size="lg" icon="bag" href="#studio">Build your cup<//>
+              <${D.Button} variant="secondary" href="#order">How to order<//>
             </div>
           </div>
         </div>
@@ -380,8 +477,8 @@
   var STORY = [
     { at: 0.34, kind: 'title' },
     { at: 0.45, n: 1, head: 'Every week,', body: 'we randomly pick one of our matcha creations to be your Matcha of the Week.', icon: 'whisk' },
-    { at: 0.56, n: 2, head: 'And guess what?', body: 'price' , icon: 'sparkle' },
-    { at: 0.67, n: 3, head: 'How do we pick?', body: 'Every week, we roll for your Matcha of the Week on our IG Stories.', icon: 'dice' }
+    { at: 0.56, n: 2, head: 'How do we pick?', body: 'Every week, we roll for your Matcha of the Week on our IG Stories.', icon: 'dice' },
+    { at: 0.67, n: 3, head: 'And guess what?', body: 'price' , icon: 'sparkle' }
   ];
   var STORY_SPAN = 0.11, BOOM_AT = 0.8, LAST_EXIT = 0.035;
   var STORY_EASE = 7, STORY_MAX_RATE = STORY_SPAN / 1.2;  /* each card gets at least ~1.2s, however fast you scroll */
@@ -406,7 +503,6 @@
       <p className="motw-title">“Matcha of the Week”?</p></div>`;
     return html`<div className="motw-card">
       <span className="motw-n" aria-hidden="true">${it.n}</span>
-      <span className="motw-icon" aria-hidden="true">${it.icon === 'dice' ? html`<${Dice} size=${26} />` : html`<${D.Doodle} name=${it.icon} size=${28} />`}</span>
       <p className="motw-head">${it.head}</p>
       <p className="motw-body">${storyBody(it)}</p></div>`;
   }
@@ -419,11 +515,75 @@
       <span className="boom-rays" aria-hidden="true">${Array.from({ length: 12 }).map(function (_, i) { return html`<i key=${i} style=${{ '--r': (i * 30) + 'deg' }}></i>`; })}</span>
       <span className="boom-sparks" aria-hidden="true">${SPARKS.map(function (k, i) { return html`<i key=${i} className=${'is-' + k.c} style=${{ '--bx': k.x + 'px', '--by': k.y + 'px', '--bs': k.s + 'px', animationDelay: k.delay + 'ms' }}></i>`; })}</span>
       <div className="price-tag">
-        <span className="price-tag-kicker">Matcha of the Week</span>
         <span className="price-tag-price"><span className="price-rm">${WEEKLY_PRICE.slice(0, 2)}</span>${WEEKLY_PRICE.slice(2)}</span>
-        <span className="price-tag-drink">${WEEKLY.name} · this week only</span>
       </div>
     </div>`;
+  }
+
+  /* Phones: the section opens on the "What is Matcha of the Week?" card. As the visitor scrolls, cards 1, 2 and 3
+     slide out from under it one at a time; once all three are open, the RM8.99 tag pops with its burst.
+     Only transforms change, so the page never jumps; scrolling back up closes the cards again. */
+  function StoryStack() {
+    var box = useRef(null), tag = useRef(null);
+    var popS = useState(false), popped = popS[0], setPopped = popS[1];
+    useEffect(function () {
+      var el = box.current; if (!el) return;
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var cards = el.querySelectorAll('.motw-spread-card'), raf = 0, tops = [];
+      function measure() {
+        for (var i = 0; i < cards.length; i++) { cards[i].style.transform = 'none'; }
+        tops = Array.prototype.map.call(cards, function (c) { return c.offsetTop; });
+        tick();
+      }
+      function tick() {
+        raf = 0;
+        var vh = window.innerHeight, r = el.getBoundingClientRect();
+        /* overall progress: starts when the block's top is 70% down the screen, done when it is near the top */
+        var P = reduce ? 1 : clamp01((vh * 0.7 - r.top) / (vh * 0.62));
+        var y = 0;   /* where the previous card currently sits, relative to the title card */
+        for (var i = 1; i < cards.length; i++) {
+          var o = easeOut(clamp01(P * (cards.length - 1) - (i - 1)));   /* card i opens during its own third */
+          var gap = tops[i] - tops[i - 1];
+          var tucked = y + 10;            /* hidden just under the card above it */
+          var target = tucked + (y + gap - tucked) * o;
+          cards[i].style.transform = 'translateY(' + (target - (tops[i] - tops[0])).toFixed(1) + 'px) scale(' + (0.92 + 0.08 * o).toFixed(3) + ')';
+          cards[i].style.opacity = (o > 0 ? 1 : 0);
+          y = target;
+        }
+        var t = tag.current ? tag.current.getBoundingClientRect() : null;
+        setPopped(P >= 1 && !!t && t.top < vh * 0.8);
+      }
+      function on() { if (!raf) raf = requestAnimationFrame(tick); }
+      measure();
+      window.addEventListener('scroll', on, { passive: true }); window.addEventListener('resize', measure);
+      return function () { window.removeEventListener('scroll', on); window.removeEventListener('resize', measure); if (raf) cancelAnimationFrame(raf); };
+    }, []);
+    /* when the tag pops, it flies out of the small "RM8.99" in card 3 and grows into place, then bursts */
+    useEffect(function () {
+      if (!popped || !box.current || !tag.current) return;
+      var big = tag.current.querySelector('.price-tag'), small = box.current.querySelector('.motw-price-inline');
+      if (!big || !small || !big.animate) return;
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      var a = small.getBoundingClientRect(), z = big.getBoundingClientRect();
+      var dx = (a.left + a.width / 2) - (z.left + z.width / 2), dy = (a.top + a.height / 2) - (z.top + z.height / 2);
+      var k = Math.max(0.08, a.width / Math.max(1, z.width));
+      var anim = big.animate([
+        { transform: 'translate(calc(-50% + ' + dx.toFixed(1) + 'px), calc(-50% + ' + dy.toFixed(1) + 'px)) rotate(0deg) scale(' + k.toFixed(3) + ')', opacity: 1 },
+        { offset: 0.72, transform: 'translate(-50%, -50%) rotate(-3deg) scale(1.14)', opacity: 1 },
+        { transform: 'translate(-50%, -50%) rotate(-6deg) scale(1)', opacity: 1 }
+      ], { duration: 560, easing: 'cubic-bezier(.3,.7,.2,1)', fill: 'backwards' });
+      small.classList.add('is-launch');
+      var t = setTimeout(function () { small.classList.remove('is-launch'); }, 400);
+      return function () { anim.cancel(); clearTimeout(t); small.classList.remove('is-launch'); };
+    }, [popped]);
+    return html`<${R.Fragment}>
+      <div className="motw-spread" ref=${box}>
+        ${STORY.map(function (it, i) {
+          return html`<div key=${i} className="motw-spread-card" style=${{ zIndex: STORY.length - i, opacity: i ? 0 : 1 }}><${StoryCard} it=${it} /></div>`;
+        })}
+      </div>
+      <div className=${'motw-pop-tag' + (popped ? ' is-popped' : '')} ref=${tag}><${PriceTag} on=${popped} /></div>
+    <//>`;
   }
 
   function Assembly(p) {
@@ -490,41 +650,21 @@
       })}
     </ol>`;
     return html`
-      <section id="assembly" className=${'assembly' + (pinned ? ' is-pinned' : '')} ref=${p.secRef} aria-labelledby="assembly-title">
+      <section id="assembly" className=${'assembly' + (pinned ? ' is-pinned' : '')} ref=${p.secRef} aria-label="Matcha of the Week">
         ${pinned ? STOP_AT.map(function (_, k) { return html`<div key=${k} className=${'story-stop' + (k === STOP_AT.length - 1 ? ' is-tag' : '')} aria-hidden="true"></div>`; }) : null}
         <div className="assembly-stick" ref=${p.stickRef}>
           <div className="wrap assembly-grid">
-            <div className="assembly-title">
-              <${D.StickerHeadline} size="lg" className="chapter-title"><span id="assembly-title">Watch it come together</span><//>
-            </div>
             <div className="assembly-stage" ref=${stage}>
-              <div className="stage-inner">
-                <img className="watercolor-img" src="watercolor.webp" alt="" width="648" height="624" loading="lazy" decoding="async" />
-                <div className=${'cup-wrap' + (story ? ' is-dim' : '')}><${D.CupPreview} width=${narrow ? 200 : 260} layers=${layer} name="DA JU" charm="both" alt=${'Illustrated Matcha Blue Sea Salt, layer ' + layer + ' of 5: ' + LAYERS[layer - 1]} /></div>
-                ${pinned ? html`<div className="motw-stack" aria-hidden="true">
-                  ${STORY.map(function (it, i) {
-                    var t = clamp01((pr - it.at) / STORY_SPAN), last = i === STORY.length - 1;
-                    var e = easeOut(clamp01(t / 0.35)), x = clamp01((t - 0.72) / 0.28);
-                    /* the last card leaves (and, scrolling back up, comes back) with the same motion as the others,
-                       in the short stretch just before the price tag, instead of snapping on and off */
-                    if (last) x = clamp01((pr - (BOOM_AT - LAST_EXIT)) / LAST_EXIT);
-                    var op = e * (1 - x);
-                    if (op <= 0.001) return null;
-                    var st = { opacity: op, transform: 'translate(-50%, -50%) translateY(' + ((1 - e) * 36 - x * 80).toFixed(1) + 'px) scale(' + (0.12 + 0.88 * e + x * 0.06).toFixed(3) + ')' };
-                    return html`<div key=${i} className="motw-item" style=${st}><${StoryCard} it=${it} /></div>`;
-                  })}
-                  <${PriceTag} on=${boom} />
-                </div>` : null}
-              </div>
               ${pinned ? html`<div className="sr-only">
                   <h3>What is “Matcha of the Week”?</h3>
                   <ol>${STORY.slice(1).map(function (it) { return html`<li key=${it.n}>${it.head} ${it.body === 'price' ? "That week's pick is only " + WEEKLY_PRICE + '!' : it.body}</li>`; })}</ol>
                   <p>${WEEKLY.name} is this week's Matcha of the Week at ${WEEKLY_PRICE}.</p></div>` : html`<div className="motw-static">
-                  <${StoryCard} it=${STORY[0]} />
-                  ${STORY.slice(1).map(function (it) { return html`<${StoryCard} key=${it.n} it=${it} />`; })}
-                  <${PriceTag} on=${true} />
+                  ${narrow ? html`<${StoryStack} />` : html`<${R.Fragment}>
+                    <${StoryCard} it=${STORY[0]} />
+                    ${STORY.slice(1).map(function (it) { return html`<${StoryCard} key=${it.n} it=${it} />`; })}
+                    <${PriceTag} on=${true} />
+                  <//>`}
                 </div>`}
-              ${!pinned ? html`<div className="play-row"><${D.Button} variant="secondary" icon="sparkle" onClick=${function () { buzz(); play(); }} disabled=${playing}>${playing ? 'Building…' : 'Build it again'}<//></div>` : null}
             </div>
           </div>
         </div>
@@ -533,55 +673,13 @@
 
   /* ---------- Ch.3 ---------- */
   function Menu(p) {
-    var deck = useRef(null);
-    var idxS = useState(0), idx = idxS[0], setIdx = idxS[1];
     var catS = useState('Matcha'), cat = catS[0], setCat = catS[1];
     var list = MENU.filter(function (m) { return m.cat === cat; });
-    var COUNT = list.length + (cat === 'Matcha' ? 1 : 0);
-    useEffect(function () { var el = deck.current; if (el) el.scrollTo({ left: 0, behavior: 'instant' }); setIdx(0); }, [cat]);
-    useEffect(function () {
-      var el = deck.current; if (!el) return;
-      /* Which card is "current": phones snap cards to the centre, desktop snaps them to the left edge. At either
-         end of the row the first/last card wins, so every dot can be reached. */
-      function track() {
-        var kids = el.querySelectorAll('.deck-row > *'); if (!kids.length) return;
-        var max = el.scrollWidth - el.clientWidth, best = 0, bd = 1e9;
-        if (el.scrollLeft >= max - 2 && max > 0) { setIdx(kids.length - 1); return; }
-        var start = (getComputedStyle(kids[0]).scrollSnapAlign || '').indexOf('start') >= 0;
-        var pad = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0;
-        var ref = start ? el.scrollLeft + pad : el.scrollLeft + el.clientWidth / 2;
-        for (var i = 0; i < kids.length; i++) { var c = start ? kids[i].offsetLeft : kids[i].offsetLeft + kids[i].offsetWidth / 2, d = Math.abs(c - ref); if (d < bd) { bd = d; best = i; } }
-        setIdx(best);
-      }
-      track();
-      el.addEventListener('scroll', track, { passive: true });
-      return function () { el.removeEventListener('scroll', track); };
-    }, []);
-    function goTo(i) {
-      var el = deck.current; if (!el) return; var k = el.querySelectorAll('.deck-row > *')[i]; if (!k) return;
-      var start = (getComputedStyle(k).scrollSnapAlign || '').indexOf('start') >= 0, pad = parseFloat(getComputedStyle(el).scrollPaddingLeft) || 0;
-      el.scrollTo({ left: start ? k.offsetLeft - pad : k.offsetLeft - (el.clientWidth - k.offsetWidth) / 2, behavior: 'smooth' });
-    }
-    useEffect(function () {
-      var el = deck.current; if (!el) return;
-      var last = el.scrollLeft, t = null;
-      function on() {
-        var v = el.scrollLeft - last; last = el.scrollLeft;
-        var lean = Math.max(-4, Math.min(4, -v * 0.25));
-        el.style.setProperty('--lean', lean.toFixed(2) + 'deg'); el.classList.add('is-moving');
-        clearTimeout(t); t = setTimeout(function () { el.classList.remove('is-moving'); }, 140);
-      }
-      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-      el.addEventListener('scroll', on, { passive: true });
-      return function () { el.removeEventListener('scroll', on); clearTimeout(t); };
-    }, []);
-    function nudge(dir) { var el = deck.current; if (el) el.scrollBy({ left: dir * 300, behavior: 'smooth' }); }
     return html`
-      <section id="menu" className="band menu" aria-labelledby="menu-title">
-        <div className="wrap menu-head">
-          <div>
+      <section id="menu" className="band menu fx-menu" aria-labelledby="menu-title">
+        <div className="wrap">
+          <div className="fx-sec-head fx-menu-head">
             <${D.StickerHeadline} size="lg" className="chapter-title"><span id="menu-title">Collection menu</span><//>
-            <p className="body p0 muted" style=${{ maxWidth: 480 }}>One week. One matcha. A little surprise</p>
             <div className="menu-tabs" role="tablist" aria-label="Menu category" onKeyDown=${function (e) { tabKeys(e, CATS.indexOf(cat), CATS.length, function (i) { setCat(CATS[i]); }); }}>
               ${CATS.map(function (c) {
                 var n = MENU.filter(function (m) { return m.cat === c; }).length;
@@ -589,31 +687,17 @@
               })}
             </div>
           </div>
-          <span className="swipe-hint label" aria-hidden="true">Swipe <svg width="18" height="18" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
-          ${p.narrow ? null : html`<div className="deck-btns">
-            <button type="button" className="round-btn" aria-label="Scroll menu left" onClick=${function () { nudge(-1); }}><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
-            <button type="button" className="round-btn" aria-label="Scroll menu right" onClick=${function () { nudge(1); }}><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg></button>
-          </div>`}
-        </div>
-        <div className="deck" id="menu-panel" role="tabpanel" aria-labelledby=${'menu-tab-' + cat} ref=${deck} tabIndex="0">
-          <div className="deck-row">
+          <div className="fx-menu-grid" id="menu-panel" role="tabpanel" aria-labelledby=${'menu-tab-' + cat}>
             ${list.map(function (m) {
-              var art = html`<${D.CupPreview} width=${150} name="DA JU" charm="butterfly" className=${cupClass(m.id)} alt=${'Illustrated ' + m.name + ' with DA JU in marker and butterfly charms'} />`;
-              return html`<div key=${m.id} className=${'deck-card drink-' + m.id}><${D.ProductCard} name=${m.name} flavor=${m.flavor} note=${m.note} price=${priceText(m.price)} status=${m.status} category=${m.cat}
-                tilt=${m.tilt} suggestion=${m.suggestion} art=${art} image=${m.image} imageAlt=${m.imageAlt}
+              var art = html`<${Ph} text=${m.name} label=${m.imageAlt || ('Photo of ' + m.name)} />`;
+              return html`<div key=${m.id} className=${'fx-menu-card drink-' + m.id}><${D.ProductCard} name=${m.name} note=${m.note} price=${m.status === 'weekly' ? WEEKLY_PRICE : priceText(m.price)} status=${m.status} category=${m.cat}
+                suggestion=${m.suggestion} art=${art}
                 onAdd=${m.status === 'soldout' ? undefined : function () { p.onCustomize(m); }} /></div>`;
             })}
-            ${cat === 'Matcha' ? html`<div className="coming-wrap"><div className="coming">
-              <${D.Doodle} name="sparkle" size=${36} />
-              <p className="script">something special, every week</p>
-              <p className="body p0 muted">A new drop every week. Follow us for the reveal.</p>
+            ${cat === 'Matcha' ? html`<div className="coming-wrap fx-menu-card"><div className="coming">
+              <p className="script">New menu to come...</p>
             </div></div>` : null}
           </div>
-        </div>
-        <div className="dots" role="group" aria-label="Menu cards">
-          ${Array.from({ length: COUNT }).map(function (_, i) {
-            return html`<button key=${i} type="button" className="dot" aria-label=${'Card ' + (i + 1) + ' of ' + COUNT} aria-current=${idx === i ? 'true' : 'false'} onClick=${function () { goTo(i); }}><span></span></button>`;
-          })}
         </div>
       </section>`;
   }
@@ -625,6 +709,7 @@
     var cupName = (c.name || '').trim() || 'DA JU';   /* a name of only spaces falls back to DA JU */
     var room = Math.max(0, MAX_CUPS - (p.bagCount || 0)), maxQty = Math.max(1, Math.min(MAX_CUPS, room)), full = room <= 0;
     var head = html`<div className="studio-head">
+      <p className="fx-step">Step 1 of 3</p>
       <${D.StickerHeadline} size="lg" className="chapter-title"><span id="studio-title">Build your cup</span><//>
     </div>`;
     var caption = 'Ice ' + c.ice.toLowerCase() + ' · sweetness ' + c.sweet.toLowerCase();
@@ -662,7 +747,7 @@
                   return html`<button key=${m.id} type="button" role="radio" aria-checked=${on} tabIndex=${on ? 0 : -1} disabled=${sold} className=${'drink-chip' + (on ? ' is-on' : '')}
                     onClick=${function (e) { buzz(); p.setDrink(m.id); var b = e.currentTarget, row = b.parentNode; if (row.scrollWidth > row.clientWidth) row.scrollTo({ left: b.offsetLeft - 16, behavior: 'smooth' }); }}>
                     <span className="drink-thumb"><${DrinkThumb} drink=${m} size=${34} /></span>
-                    <span className="drink-chip-text"><span className="drink-chip-name">${m.name}</span><span className="drink-chip-cat">${m.status === 'weekly' ? 'Matcha of the Week' : sold ? 'Sold out today' : m.cat}</span></span>
+                    <span className="drink-chip-text"><span className="drink-chip-name">${m.name}</span>${m.status === 'weekly' || sold ? html`<span className="drink-chip-cat">${sold ? 'Sold out today' : 'Matcha of the Week'}</span>` : null}</span>
                   </button>`;
                 })}
               </div>
@@ -722,12 +807,11 @@
     var details = p.step !== 'pick', nErr = Object.keys(p.errors).length;
     var icon = stations.filter(function (s) { return s[0] === p.mode; })[0][1];
     return html`
-      <section id="order" className="band" data-theme="forest" aria-labelledby="order-title">
-        <div className="route-wrap">
+      <section id="order" className="band" aria-labelledby="order-title">
+        <div className="wrap"><div className="route-wrap fx-order-card">
           <div className="route-head">
-            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="order-title">How to order</span><//>
-            <${D.Doodle} name="sprig" size=${40} />
-            <p className="caption p0 muted" style=${{ textTransform: 'uppercase' }}>${details ? 'Step 2 of 2 · Your details' : 'Step 1 of 2 · Pick a method'}</p>
+            <p className="fx-step">Step 2 of 3</p>
+            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="order-title">Delivery or pickup</span><//>
           </div>
           <${Fold} open=${!details} className="no-flip">
             <div className="day-toggle-static">
@@ -779,7 +863,7 @@
               ? html`<${D.Notice} tone="availability" title="Weekend notes">Maang Apartment pickups are by arrangement, so add your preferred time at checkout. Weekend COD is based on order & availability, and we'll confirm before dispatch.<//>`
               : html`<${D.Notice} tone="info" title="Order before the window closes">Pre-orders for the 12:30 PM – 1:25 PM Centre Point slot close at 12:30 PM, when pickup starts. Miss it and Weekday COD (after 6:30 PM) is next.<//>`}
           <//>
-        </div>
+        </div></div>
       </section>`;
   }
 
@@ -791,7 +875,8 @@
       <section id="ticket" className="band" aria-labelledby="ticket-title">
         <div className="wrap signoff">
           <div className="signoff-copy">
-            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="ticket-title">Ready when you are</span><//>
+            <p className="fx-step">Step 3 of 3</p>
+            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="ticket-title">Here’s your receipt</span><//>
           </div>
           <div className="signoff-ticket">
             <p className=${'ticket-state' + (p.complete ? ' is-ok' : '')} role="status">
@@ -875,25 +960,18 @@
   }
 
   function Footer() {
+    var ig = SOCIAL.instagram, tt = SOCIAL.tiktok;
     return html`
-      <footer className="foot" data-theme="forest" style=${{ background: 'var(--surface)', color: 'var(--text)' }}>
-        <div className="wrap foot-grid">
-          <div style=${{ display: 'flex', flexDirection: 'column', gap: 10, alignItems: 'flex-start' }}>
-            <${D.Wordmark} size="sm" />
-            <p className="script">One week. One matcha. A little surprise</p>
-          </div>
-          <nav aria-label="Footer">
-            <a href="#drop" className="label">Weekly Drop</a>
-            <a href="#menu" className="label">Matcha Menu</a>
-            <a href="#studio" className="label">Build your cup</a>
-            <a href="#order" className="label">How to Order</a>
-            <a href="#popups" className="label">Pop-ups</a>
-            ${SOCIAL.instagram.url ? html`<a href=${SOCIAL.instagram.url} target="_blank" rel="noopener" className="label">Instagram ${SOCIAL.instagram.handle}</a>` : html`<span className="label foot-soon">Instagram ${SOCIAL.instagram.handle}</span>`}
-            ${SOCIAL.tiktok.url ? html`<a href=${SOCIAL.tiktok.url} target="_blank" rel="noopener" className="label">TikTok ${SOCIAL.tiktok.handle}</a>` : html`<span className="label foot-soon">TikTok ${SOCIAL.tiktok.handle}</span>`}
-            <a href=${'https://wa.me/' + WA_NUMBER} target="_blank" rel="noopener" className="label">WhatsApp ${WA_DISPLAY}</a>
+      <footer className="foot fx-foot" data-theme="forest" style=${{ background: 'var(--surface)', color: 'var(--text)' }}>
+        <div className="wrap fx-foot-min">
+          <${D.Wordmark} size="sm" />
+          <p className="script">One week. One matcha. A little surprise</p>
+          <nav aria-label="Contact and social" className="fx-foot-links">
+            <a href=${'https://wa.me/' + WA_NUMBER} target="_blank" rel="noopener" className="label">WhatsApp</a>
+            ${ig.url ? html`<a href=${ig.url} target="_blank" rel="noopener" className="label">Instagram</a>` : html`<span className="label foot-soon">Instagram</span>`}
+            ${tt.url ? html`<a href=${tt.url} target="_blank" rel="noopener" className="label">TikTok</a>` : html`<span className="label foot-soon">TikTok</span>`}
           </nav>
         </div>
-        <p className="caption muted" style=${{ maxWidth: 1200, margin: '32px auto 0' }}>DAJU Matcha · pop-up · Pick Up, Grab Express & COD to KK, Penampang, Putatan, Kepayan</p>
       </footer>`;
   }
 
@@ -940,7 +1018,7 @@
       groups[gi[k]].keys.push(it.key);
     });
     var full = items.length >= MAX_CUPS;
-    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="Your order bag" step="Step 1 of 3"
+    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="Build your cup" step="Step 1 of 3"
       footer=${items.length ? html`<div className="drawer-stack" style=${{ gap: 12 }}>
         <div className="sum-row"><span>Estimated subtotal</span><span>${subtotalText(items)}</span></div>
         ${p.ready ? html`<div className="method-summary">
@@ -949,7 +1027,7 @@
             <button type="button" className="text-btn" onClick=${p.onNext}>Change</button>
           </div>
           <${D.Button} variant="primary" size="lg" icon="sparkle" block=${true} onClick=${p.onReview}>Review my order<//>`
-        : html`<${D.Button} variant="primary" size="lg" block=${true} onClick=${p.onNext}>${p.saved ? 'Finish my delivery details' : 'Choose pickup or delivery'}<//>`}</div>` : null}>
+        : html`<${D.Button} variant="primary" size="lg" block=${true} onClick=${p.onNext}>${p.saved ? 'Finish my delivery details' : 'Next: delivery or pickup'}<//>`}</div>` : null}>
       ${items.length ? html`<${R.Fragment}><ul className="bag-list">${groups.map(function (g) {
         var it = g.it, q = g.keys.length;
         return html`<li key=${g.keys[0]} className="bag-item">
@@ -1032,7 +1110,7 @@
 
   function FulfillDrawer(p) {
     var f = p.f, set = p.setF, tried = p.tried, err = p.errors;
-    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="How should we get it to you?" step="Step 2 of 3"
+    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="Delivery or pickup" step="Step 2 of 3"
       footer=${html`<div className="drawer-stack" style=${{ gap: 10 }}>
         ${tried && Object.keys(err).length ? html`<p className="fine" style=${{ color: 'var(--alert)', fontWeight: 600 }} role="alert">Fix the highlighted ${Object.keys(err).length === 1 ? 'field' : 'fields'} to see your ticket.</p>` : null}
         <${D.Button} variant="primary" size="lg" block=${true} disabled=${f.mode === 'COD' && f.zone === 'OTHER'} onClick=${p.onNext}>Review ticket<//>
@@ -1049,7 +1127,7 @@
     useEffect(function () { if (showRaw && ta.current) { ta.current.focus(); ta.current.select(); } }, [showRaw]);
     usePreparedTicket(p.order, p.open);
     var text = orderMessage(p.order);
-    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="Your order ticket" step="Step 3 of 3"
+    return html`<${D.Drawer} open=${p.open} onClose=${p.onClose} side=${p.side} className="checkout-drawer" title="Here’s your receipt" step="Step 3 of 3"
       footer=${html`<div className="drawer-stack" style=${{ gap: 10 }}>
         <${D.Button} variant="primary" size="lg" icon="bubble" block=${true} href=${'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(text)} target="_blank" rel="noopener">Send via WhatsApp<//>
         <${D.Button} variant="sticker" block=${true} icon="sparkle" disabled=${busy} onClick=${function () { if (busy) return; setBusy(true); shareTicketImage(p.order, text, p.toast).then(function () { setBusy(false); }); }}>${busy ? 'Making your ticket image…' : 'Share ticket as image'}<//>
@@ -1064,34 +1142,135 @@
   }
 
   /* ---------- Bottom tab bar (phones) ---------- */
-  var TABS = [['drop', 'Drop', 'sparkle'], ['menu', 'Menu', 'whisk'], ['studio', 'Studio', 'daisy'], ['order', 'Order', 'scooter']];
+  /* Pages (one file, three views): which page each section lives on */
+  var PAGE_OF = { home: 'home', top: 'home', drop: 'home', assembly: 'home', lineup: 'home', follow: 'home', skip: 'home',
+    menu: 'menu', studio: 'menu', order: 'menu', ticket: 'menu', visit: 'visit', popups: 'visit', contact: 'visit' };
+  function hashId() { try { return decodeURIComponent((location.hash || '').slice(1)) || 'home'; } catch (e) { return 'home'; } }
+  var PAGES = [['home', 'Home', 'sparkle'], ['menu', 'Menu', 'whisk'], ['visit', 'Visit', 'pin']];
+  /* Sliding highlight under the current page link: measures the active link and moves one shared pill to it,
+     so tapping Home / Menu / Visit glides the highlight across instead of jumping. */
+  function useGlide(page, activeSel) {
+    var ref = useRef(null);
+    R.useLayoutEffect(function () {
+      var nav = ref.current; if (!nav) return;
+      function place() {
+        var a = nav.querySelector(activeSel); if (!a) return;
+        nav.style.setProperty('--gx', a.offsetLeft + 'px');
+        nav.style.setProperty('--gw', a.offsetWidth + 'px');
+      }
+      place();
+      if (!nav.classList.contains('glide-ready')) requestAnimationFrame(function () { nav.classList.add('glide-ready'); });  /* no slide on first paint */
+      window.addEventListener('resize', place);
+      return function () { window.removeEventListener('resize', place); };
+    }, [page]);
+    return ref;
+  }
   function TabBar(p) {
-    var s = useState('drop'), here = s[0], setHere = s[1];
-    useEffect(function () {
-      if (!('IntersectionObserver' in window)) return;
-      var map = { drop: 'drop', assembly: 'drop', menu: 'menu', studio: 'studio', order: 'order' };
-      var io = new IntersectionObserver(function (es) {
-        es.forEach(function (e) { if (e.isIntersecting) setHere(map[e.target.id]); });
-      }, { rootMargin: '-45% 0px -50% 0px' });
-      Object.keys(map).forEach(function (id) { var el = document.getElementById(id); if (el) io.observe(el); });
-      return function () { io.disconnect(); };
-    }, []);
-    return html`<nav className="tabbar" aria-label="Quick navigation">
-      ${TABS.map(function (t) {
-        return html`<a key=${t[0]} href=${'#' + t[0]} className=${'tab' + (here === t[0] ? ' is-here' : '')} aria-current=${here === t[0] ? 'location' : undefined}><${D.Doodle} name=${t[2]} size=${24} />${t[1]}</a>`;
+    var ref = useGlide(p.page, '.tab.is-here');
+    return html`<nav className="tabbar fx-tabbar" aria-label="Pages" ref=${ref}>
+      <span className="glide glide-tab" aria-hidden="true"></span>
+      ${PAGES.map(function (t) {
+        var here = p.page === t[0];
+        return html`<a key=${t[0]} href=${'#' + t[0]} className=${'tab' + (here ? ' is-here' : '')} aria-current=${here ? 'page' : undefined}><${D.Doodle} name=${t[2]} size=${24} />${t[1]}</a>`;
       })}
-      <button type="button" className="tab" onClick=${p.onBag} aria-label=${'Order bag, ' + p.count + (p.count === 1 ? ' item' : ' items')}>
-        <${D.Doodle} name="bag" size=${24} />Bag
-        ${p.count ? html`<span className="tab-count bump" key=${p.count}>${p.count}</span>` : null}
-      </button>
     </nav>`;
   }
-
-  /* #52: top links include Build your cup and Pop-ups */
-  var NAV_LINKS = [{ label: 'Weekly Drop', href: '#drop' }, { label: 'Menu', href: '#menu' }, { label: 'Build your cup', href: '#studio' }, { label: 'How to Order', href: '#order' }, { label: 'Pop-ups', href: '#popups' }];
+  /* Top bar: logo, page links, and an Order button that always shows how many cups are in the bag */
+  function Header(p) {
+    /* Hides when the visitor scrolls down, and comes straight back on even a small scroll up. */
+    var hidS = useState(false), hidden = hidS[0], setHidden = hidS[1];
+    var glideRef = useGlide(p.page, 'a.is-on');
+    useEffect(function () {
+      var last = window.scrollY, ticking = false;
+      function check() {
+        ticking = false;
+        var y = Math.max(0, window.scrollY), dy = y - last;
+        if (y < 80) setHidden(false);                 /* always shown near the top of the page */
+        else if (dy > 6) setHidden(true);             /* scrolling down */
+        else if (dy < -3) setHidden(false);           /* a tiny scroll up brings it back */
+        if (Math.abs(dy) > 3) last = y;
+      }
+      function onScroll() { if (!ticking) { ticking = true; requestAnimationFrame(check); } }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      return function () { window.removeEventListener('scroll', onScroll); };
+    }, []);
+    useEffect(function () { setHidden(false); }, [p.page]);
+    return html`<header className=${'fx-head' + (hidden ? ' is-hidden' : '')}>
+      <div className="fx-head-row">
+        <a className="fx-brand" href="#home" aria-label="DA JU home"><${D.Wordmark} size="sm" /></a>
+        <nav className="fx-links" aria-label="Pages" ref=${glideRef}>
+          <span className="glide glide-link" aria-hidden="true"></span>
+          ${PAGES.map(function (t) { return html`<a key=${t[0]} href=${'#' + t[0]} className=${p.page === t[0] ? 'is-on' : ''} aria-current=${p.page === t[0] ? 'page' : undefined}>${t[1]}</a>`; })}
+        </nav>
+        <button type="button" className="fx-order" onClick=${p.onBag} aria-label=${'Order bag, ' + p.count + (p.count === 1 ? ' item' : ' items')}>
+          <${D.Doodle} name="bag" size=${18} /><span>Bag</span><span className="fx-order-n">${p.count}</span>
+        </button>
+      </div>
+    </header>`;
+  }
 
   /* ---------- App ---------- */
+  /* Checkout pop-up on phones: drag down from the top (the handle / title area) to close it.
+     The pop-up has no X button any more; tapping outside it also closes it (the scrim does that). */
+  function useSwipeToClose() {
+    useEffect(function () {
+      var sheet = null, scrim = null, head = null, y0 = 0, t0 = 0, dy = 0, h = 1, dragging = false;
+      function start(e) {
+        var hd = e.target.closest && e.target.closest('.dj-drawer-bottom .dj-drawer-head');
+        if (!hd) return;
+        head = hd; sheet = hd.closest('.dj-drawer'); scrim = sheet.closest('.dj-drawer-scrim');
+        y0 = e.touches[0].clientY; t0 = Date.now(); dy = 0; h = sheet.offsetHeight || 1; dragging = false;
+      }
+      function move(e) {
+        if (!sheet) return;
+        dy = Math.max(0, e.touches[0].clientY - y0);
+        if (!dragging && dy > 2) {
+          dragging = true;
+          /* the open animation must not fight the finger: freeze it and follow the touch 1:1 */
+          sheet.style.animation = 'none'; sheet.style.transition = 'none';
+          if (scrim) { scrim.style.animation = 'none'; scrim.style.transition = 'none'; }
+        }
+        if (!dragging) return;
+        sheet.style.transform = 'translate3d(0,' + dy + 'px,0)';
+        if (scrim) scrim.style.backgroundColor = 'rgb(22 58 30 / ' + (0.45 * Math.max(0, 1 - dy / h)).toFixed(3) + ')';
+        if (e.cancelable) e.preventDefault();
+      }
+      function end() {
+        if (!sheet) return;
+        var s = sheet, sc = scrim, hd = head, wasDrag = dragging;
+        var v = dy / Math.max(1, Date.now() - t0), close = dy > Math.min(120, h * 0.25) || (dy > 30 && v > 0.6);
+        sheet = null; scrim = null; head = null; dragging = false;
+        if (!wasDrag) return;
+        var ease = 'cubic-bezier(.2,.8,.2,1)';
+        if (close) {
+          /* keep going down from where the finger let go, fade the backdrop, then close for real */
+          var ms = Math.round(Math.max(140, Math.min(260, (h - dy) / Math.max(v, 1.2))));
+          s.style.transition = 'transform ' + ms + 'ms ' + ease;
+          s.style.transform = 'translate3d(0,' + (h + 40) + 'px,0)';
+          if (sc) { sc.style.transition = 'background-color ' + ms + 'ms linear'; sc.style.backgroundColor = 'rgb(22 58 30 / 0)'; }
+          setTimeout(function () {
+            /* the pop-up is already off-screen: skip the usual close animation so it can't jump back */
+            s.style.opacity = '0'; if (sc) sc.style.opacity = '0';
+            var btn = hd.querySelector('.dj-drawer-close'); if (btn) btn.click();
+          }, ms);
+        } else {
+          s.style.transition = 'transform .24s ' + ease;
+          s.style.transform = 'translate3d(0,0,0)';
+          if (sc) { sc.style.transition = 'background-color .24s linear'; sc.style.backgroundColor = ''; }
+        }
+      }
+      document.addEventListener('touchstart', start, { passive: true });
+      document.addEventListener('touchmove', move, { passive: false });
+      document.addEventListener('touchend', end); document.addEventListener('touchcancel', end);
+      return function () {
+        document.removeEventListener('touchstart', start); document.removeEventListener('touchmove', move);
+        document.removeEventListener('touchend', end); document.removeEventListener('touchcancel', end);
+      };
+    }, []);
+  }
+
   function App() {
+    useSwipeToClose();
     var now0 = myt();
     var boot = useRef(null); if (!boot.current) boot.current = loadSaved();   /* what this visitor had before a reload */
     var B = boot.current;
@@ -1128,9 +1307,17 @@
     var layerS = useState(5), layer = layerS[0], setLayer = layerS[1];
     var progS = useState(1), progress = progS[0], setProgress = progS[1];
 
+    var pageS = useState(function () { return PAGE_OF[hashId()] || 'home'; }), page = pageS[0], setPage = pageS[1];
+    /* Which way the new page glides in: from the right when moving to a tab further right (Home → Menu → Visit), from the left when going back */
+    var prevPage = useRef(page), glideDir = useRef('');
+    if (prevPage.current !== page) {
+      var order = PAGES.map(function (t) { return t[0]; });
+      glideDir.current = order.indexOf(page) > order.indexOf(prevPage.current) ? ' glide-in-right' : ' glide-in-left';
+      prevPage.current = page;
+    }
     var narrow = useMedia('(max-width: 720px)');
     var reduce = useMedia('(prefers-reduced-motion: reduce)');
-    var pinned = !reduce;  /* the cup stays centred and builds with the scroll on phones and desktop */
+    var pinned = false;  /* this layout shows the cup story as a normal section (it builds once when it scrolls into view) */
     var side = narrow ? 'bottom' : 'right';
 
     var storyDone = useRef(false), heroRef = useRef(null), secRef = useRef(null), stickRef = useRef(null), toastT = useRef(null), toastT2 = useRef(null);
@@ -1271,7 +1458,37 @@
       var out = []; for (var i = 0; i < studio.qty; i++) out.push(studio.mode === 'each' ? studio.cups[i] : studio.cups[0]);
       return out;
     }
-    function scrollToId(id) { setTimeout(function () { var el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); }, 30); }
+    /* Going to a section: switch to its page first, then scroll there (a page name goes to the top of that page) */
+    var goRef = useRef(null);
+    goRef.current = function (id, smooth) {
+      var pg = PAGE_OF[id] || 'home', changing = pg !== page;
+      setPage(pg);
+      requestAnimationFrame(function () { requestAnimationFrame(function () {
+        var el = id === pg || id === 'top' ? null : document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: smooth && !changing && !reduce ? 'smooth' : 'auto', block: 'start' });
+        else window.scrollTo({ top: 0, behavior: 'auto' });
+      }); });
+    };
+    function scrollToId(id) {
+      if (location.hash === '#' + id) goRef.current(id, true);
+      else location.hash = id;   /* the hashchange listener below does the rest, and Back returns to the previous page */
+    }
+    useEffect(function () {
+      function onHash() { goRef.current(hashId(), true); }
+      window.addEventListener('hashchange', onHash);
+      return function () { window.removeEventListener('hashchange', onHash); };
+    }, []);
+    /* a link to the section you are already on (same #hash) does not fire hashchange; catch those clicks too */
+    useEffect(function () {
+      function onClick(e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href^="#"]') : null;
+        if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey) return;
+        var id = a.getAttribute('href').slice(1);
+        if (id && location.hash === '#' + id) { e.preventDefault(); goRef.current(id, true); }
+      }
+      document.addEventListener('click', onClick);
+      return function () { document.removeEventListener('click', onClick); };
+    }, []);
     function setF(o) {
       setFRaw(function (x) {
         var n = Object.assign({}, x, o);
@@ -1376,11 +1593,17 @@
 
     return html`
       <div id="top">
-        <div className="preview-strip"><b>Website preview</b><span>Prices and social handles are placeholders until the menu is final.</span></div>
-        <${D.NavBar} className="nav-centered" links=${NAV_LINKS} bagCount=${bag.length} onBag=${function () { openDrawer('bag'); }} />
-        <main>
+        <${Header} page=${page} count=${bag.length} onBag=${function () { buzz(); openDrawer('bag'); }} />
+        <main key=${page} className=${"fx-page" + glideDir.current}>
+          ${page === 'home' ? html`<${R.Fragment}>
           <${Hero} narrow=${narrow} heroRef=${heroRef} onCustomize=${function (m) { setCustItem(m); openDrawer('custom'); }} />
+          <${Ticker} />
           <${Assembly} narrow=${narrow} reduce=${reduce} pinned=${pinned} layer=${layer} setLayer=${setLayer} progress=${progress} doneRef=${storyDone} secRef=${secRef} stickRef=${stickRef} />
+          <${Lineup} />
+          <${Follow} />
+          <${SkipBand} />
+          <//>` : null}
+          ${page === 'menu' ? html`<${R.Fragment}>
           <${Menu} narrow=${narrow} onCustomize=${function (m) { setCustItem(m); openDrawer('custom'); }} />
           <${Studio} narrow=${narrow} studio=${studio} setCup=${setCup} setQty=${setQty} setMode=${setStudioMode} setActive=${function (i) { setStudio(function (st) { return Object.assign({}, st, { active: i }); }); }} setDrink=${function (id) { setStudio(function (st) { return Object.assign({}, st, { drink: id }); }); }} burst=${burst} bagCount=${bag.length}
             onAdd=${function () { var l = studioCups(); if (l.length > MAX_CUPS - bag.length) { addItems(studioDrink, l); return; } var n = addItems(studioDrink, l); if (n) showToast(n === 1 ? 'Added to your bag' : 'Added ' + n + ' cups to your bag'); }} />
@@ -1395,14 +1618,18 @@
             onReview=${function () { openDrawer(detailsComplete ? 'ticket' : 'bag'); }}
             onAddStudio=${function () { addItems(studioDrink, studioCups()); openDrawer('bag'); }}
             onCopy=${function () { copyText(orderMessage(pageOrder), function () { showToast('Ticket copied'); }, function () { showToast('Copy is blocked here. Open your bag to select the text.'); }); }} />
+          <//>` : null}
+          ${page === 'visit' ? html`<${R.Fragment}>
           <${PopUps} now=${now} onPreorder=${function (pu) {
             /* #4: pickup at the pop-up stall, not the usual Centre Point / Maang Apartment spot */
             setF({ mode: 'PICK_UP', popup: pu }); setOrderStep('pick');
             showToast('Pickup set to the ' + pu.venue + ' stall. Build your cup!'); scrollToId('studio');
           }} />
+          <${Contact} />
+          <//>` : null}
         </main>
         <${Footer} />
-        ${narrow ? html`<${TabBar} count=${bag.length} onBag=${function () { buzz(); openDrawer('bag'); }} />` : null}
+        ${narrow ? html`<${TabBar} page=${page} count=${bag.length} onBag=${function () { buzz(); openDrawer('bag'); }} />` : null}
         ${bag.length && narrow && !drawer ? html`<${D.CheckoutBar} className="is-entering" count=${bag.length} total=${subtotalText(bag)} slot=${slotLine} onCheckout=${function () { openDrawer('bag'); }} />` : null}
 
         <${CustomizeDrawer} open=${drawer === 'custom'} item=${custItem} side=${side} room=${MAX_CUPS - bag.length} onClose=${function () { closeDrawer(); }}
@@ -1412,7 +1639,7 @@
           onRemoveMany=${function (ks) { setBag(function (b) { return b.filter(function (x) { return ks.indexOf(x.key) < 0; }); }); }}
           onMore=${function (it) { addItems(drinkById(it.id), [{ ice: it.ice, sweet: it.sweet, name: it.cupName, flair: it.flair }]); }}
           onClear=${function () { setBag([]); showToast('Your bag is empty'); }}
-          onBrowse=${function () { closeDrawer(function () { var m = document.getElementById('menu'); if (m) m.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); }); }}
+          onBrowse=${function () { closeDrawer(function () { scrollToId('menu'); }); }}
           onNext=${function () { setTried(false); openDrawer('fulfill'); }}
           ready=${detailsComplete} saved=${saved} modeName=${MODE_NAME[f.mode]} modeIcon=${{ PICK_UP: 'bag', GRAB_EXPRESS: 'scooter', COD: 'car' }[f.mode]}
           slot=${(f.mode === 'PICK_UP' ? sch.location : where) + ' · ' + when}

@@ -113,7 +113,6 @@ def page(boot):
 <meta name="theme-color" content="#eef4ea">
 <link rel="icon" type="image/svg+xml" href="{bust('favicon.svg')}">
 <link rel="apple-touch-icon" href="{bust('apple-touch-icon.png')}">
-<link rel="preload" as="image" type="image/webp" fetchpriority="high" imagesrcset="{bust('blue-sea-salt-cutout-300.webp')} 300w, {bust('blue-sea-salt-cutout.webp')} 433w" imagesizes="(min-width: 721px) 300px, (min-width: 391px) 250px, 64vw">
 <link rel="preload" href="fonts/sacramento.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/shrikhand.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/dm-sans.woff2" as="font" type="font/woff2" crossorigin>
