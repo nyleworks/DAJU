@@ -673,28 +673,58 @@
 
   /* ---------- Ch.3 ---------- */
   function Menu(p) {
-    var catS = useState('Matcha'), cat = catS[0], setCat = catS[1];
+    /* tab = the highlighted tab (changes at once); cat = the drinks on show. Switching tabs closes the current cards
+       (fade + shrink, 160ms), swaps them, then opens the new ones (staggered rise, ~280ms) while the grid's height
+       glides from the old size to the new one, so the page below never jumps. Instant under reduced motion. */
+    var catS = useState('Matcha'), cat = catS[0], setCatNow = catS[1];
+    var tabS = useState('Matcha'), tab = tabS[0], setTab = tabS[1];
+    var phaseS = useState(''), phase = phaseS[0], setPhase = phaseS[1];
+    var gridRef = useRef(null), fromH = useRef(0), timers = useRef([]);
+    function later(fn, ms) { timers.current.push(setTimeout(fn, ms)); }
+    useEffect(function () { return function () { timers.current.forEach(clearTimeout); }; }, []);
+    function setCat(c) {
+      if (c === tab) return;
+      setTab(c);
+      var g = gridRef.current;
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      timers.current.forEach(clearTimeout); timers.current = [];
+      if (!g || reduce) { setCatNow(c); setPhase(''); if (g) g.style.height = ''; return; }
+      fromH.current = g.offsetHeight;
+      g.style.height = fromH.current + 'px';
+      setPhase('is-closing');
+      later(function () { setCatNow(c); setPhase('is-opening'); }, 160);
+    }
+    R.useLayoutEffect(function () {
+      var g = gridRef.current;
+      if (!g || phase !== 'is-opening') return;
+      g.style.height = 'auto';
+      var to = g.offsetHeight;
+      g.style.height = fromH.current + 'px';
+      void g.offsetHeight;   /* commit the old height before gliding */
+      g.style.height = to + 'px';
+      later(function () { g.style.height = ''; setPhase(''); }, 420);
+    }, [cat, phase]);
     var list = MENU.filter(function (m) { return m.cat === cat; });
     return html`
       <section id="menu" className="band menu fx-menu" aria-labelledby="menu-title">
         <div className="wrap">
           <div className="fx-sec-head fx-menu-head">
             <${D.StickerHeadline} size="lg" className="chapter-title"><span id="menu-title">Collection menu</span><//>
-            <div className="menu-tabs" role="tablist" aria-label="Menu category" onKeyDown=${function (e) { tabKeys(e, CATS.indexOf(cat), CATS.length, function (i) { setCat(CATS[i]); }); }}>
+            <div className="menu-tabs" role="tablist" aria-label="Menu category" onKeyDown=${function (e) { tabKeys(e, CATS.indexOf(tab), CATS.length, function (i) { setCat(CATS[i]); }); }}>
               ${CATS.map(function (c) {
                 var n = MENU.filter(function (m) { return m.cat === c; }).length;
-                return html`<button key=${c} id=${'menu-tab-' + c} type="button" role="tab" tabIndex=${cat === c ? 0 : -1} aria-controls="menu-panel" className=${'menu-tab' + (cat === c ? ' is-on' : '')} aria-selected=${cat === c} onClick=${function () { buzz(); setCat(c); }}>${c}<span className="menu-tab-n">${n}</span></button>`;
+                return html`<button key=${c} id=${'menu-tab-' + c} type="button" role="tab" tabIndex=${tab === c ? 0 : -1} aria-controls="menu-panel" className=${'menu-tab' + (tab === c ? ' is-on' : '')} aria-selected=${tab === c} onClick=${function () { buzz(); setCat(c); }}>${c}<span className="menu-tab-n">${n}</span></button>`;
               })}
             </div>
           </div>
-          <div className="fx-menu-grid" id="menu-panel" role="tabpanel" aria-labelledby=${'menu-tab-' + cat}>
-            ${list.map(function (m) {
+          <div ref=${gridRef} className=${'fx-menu-grid' + (phase ? ' ' + phase : '')} id="menu-panel" role="tabpanel" aria-labelledby=${'menu-tab-' + cat}>
+            ${list.map(function (m, i) {
               var art = html`<${Ph} text=${m.name} label=${m.imageAlt || ('Photo of ' + m.name)} />`;
-              return html`<div key=${m.id} className=${'fx-menu-card drink-' + m.id}><${D.ProductCard} name=${m.name} note=${m.note} price=${m.status === 'weekly' ? WEEKLY_PRICE : priceText(m.price)} status=${m.status} category=${m.cat}
+              return html`<div key=${m.id} className=${'fx-menu-card drink-' + m.id} style=${{ '--i': i }}><${D.ProductCard} name=${m.name} note=${m.note} price=${m.status === 'weekly' ? WEEKLY_PRICE : priceText(m.price)} status=${m.status} category=${m.cat}
                 suggestion=${m.suggestion} art=${art}
                 onAdd=${m.status === 'soldout' ? undefined : function () { p.onCustomize(m); }} /></div>`;
             })}
-            ${cat === 'Matcha' ? html`<div className="coming-wrap fx-menu-card"><div className="coming">
+            ${cat === 'Matcha' ? html`<div className="coming-wrap fx-menu-card" style=${{ '--i': list.length }}><div className="coming">
               <p className="script">New menu to come...</p>
             </div></div>` : null}
           </div>
@@ -952,6 +982,60 @@
             </article>`}
           ${later.length ? html`
             <div className="popup-later">
+              <p className="label">Also coming up</p>
+              <ul>${later.map(function (pu) { return html`<li key=${pu.start}><span className="popup-later-date">${pu.days}</span><span>${pu.venue}, ${pu.place} · ${pu.time}</span><a href=${mapsUrl(pu)} target="_blank" rel="noopener" className="label">Map</a></li>`; })}</ul>
+            </div>` : null}
+        </div>
+      </section>`;
+  }
+
+  /* ---------- Visit page: pop-up and WhatsApp side by side (one section, two equal cards; 2 columns on every screen) ---------- */
+  function Visit(p) {
+    var now = p.now;
+    var list = POPUPS.filter(function (pu) { return popLive(pu, now); }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
+    var next = list[0], later = list.slice(1, 4);
+    return html`
+      <section id="visit-main" className="band fx-visit" aria-labelledby="visit-title">
+        <div className="wrap">
+          <div className="fx-sec-head">
+            <${D.StickerHeadline} size="lg" className="chapter-title"><span id="visit-title">Come say hi</span><//>
+          </div>
+          <div className="fx-visit-grid">
+            <article id="popups" className=${'fx-visit-card' + (next ? '' : ' is-empty')} aria-labelledby="popups-title">
+              <div className="fx-visit-top">
+                <span className="fx-visit-icon"><${D.Doodle} name="pin" size=${22} /></span>
+                <p className="fx-visit-eyebrow" id="popups-title">${next ? 'Next pop-up' : 'Pop-ups'}</p>
+              </div>
+              ${next ? html`
+                <span className="fx-visit-badge">${popBadge(next, now)}</span>
+                <p className="fx-visit-title">${next.venue}</p>
+                <ul className="fx-visit-meta">
+                  <li><${D.Doodle} name="clock" size=${16} /><span><b>${next.days}</b><br />${next.time}</span></li>
+                  <li><${D.Doodle} name="pin" size=${16} /><span>${next.place}</span></li>
+                </ul>
+                <div className="fx-visit-btns">
+                  <${D.Button} variant="primary" className="btn-pink" block=${true} href=${mapsUrl(next)} target="_blank" rel="noopener">Directions<//>
+                  <${D.Button} variant="secondary" block=${true} onClick=${function () { p.onPreorder(next); }}>Pre-order<//>
+                </div>` : html`
+                <p className="fx-visit-title">Coming soon</p>
+                <p className="fx-visit-text">We're planning the next one. Watch our IG Stories for the date and place.</p>`}
+            </article>
+            <article id="contact" className="fx-visit-card" aria-labelledby="contact-title">
+              <div className="fx-visit-top">
+                <span className="fx-visit-icon"><${D.Doodle} name="bag" size=${22} /></span>
+                <p className="fx-visit-eyebrow" id="contact-title">Order anytime</p>
+              </div>
+              <p className="fx-visit-title">WhatsApp</p>
+              <p className="fx-visit-text"><a href=${'https://wa.me/' + WA_NUMBER} target="_blank" rel="noopener">${WA_DISPLAY}</a></p>
+              <p className="fx-visit-text fx-visit-sub">Build your cup here, then send the order to us in one tap.</p>
+              <div className="fx-visit-btns">
+                <${D.Button} variant="primary" className="btn-pink" block=${true} href="#studio">Build your cup<//>
+                <${D.Button} variant="secondary" block=${true} href="#order">How to order<//>
+              </div>
+            </article>
+          </div>
+          ${later.length ? html`
+            <div className="popup-later fx-visit-later">
               <p className="label">Also coming up</p>
               <ul>${later.map(function (pu) { return html`<li key=${pu.start}><span className="popup-later-date">${pu.days}</span><span>${pu.venue}, ${pu.place} · ${pu.time}</span><a href=${mapsUrl(pu)} target="_blank" rel="noopener" className="label">Map</a></li>`; })}</ul>
             </div>` : null}
@@ -1620,12 +1704,11 @@
             onCopy=${function () { copyText(orderMessage(pageOrder), function () { showToast('Ticket copied'); }, function () { showToast('Copy is blocked here. Open your bag to select the text.'); }); }} />
           <//>` : null}
           ${page === 'visit' ? html`<${R.Fragment}>
-          <${PopUps} now=${now} onPreorder=${function (pu) {
+          <${Visit} now=${now} onPreorder=${function (pu) {
             /* #4: pickup at the pop-up stall, not the usual Centre Point / Maang Apartment spot */
             setF({ mode: 'PICK_UP', popup: pu }); setOrderStep('pick');
             showToast('Pickup set to the ' + pu.venue + ' stall. Build your cup!'); scrollToId('studio');
           }} />
-          <${Contact} />
           <//>` : null}
         </main>
         <${Footer} />
