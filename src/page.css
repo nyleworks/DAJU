@@ -1154,3 +1154,47 @@ html, body { overflow-x: clip; }
 /* Every pop-up: no X button (tap outside to close; on phones, drag the top down) */
 .dj-drawer-scrim .dj-drawer-close { display: none; }
 .dj-drawer-scrim .dj-drawer-title { padding-right: 0; }
+
+/* Collection menu: smooth close / open when switching category tabs (see Menu in app.js) */
+.fx-menu-grid { transition: height .32s cubic-bezier(.2, .7, .2, 1); }
+.fx-menu-grid.is-closing .fx-menu-card { opacity: 0; transform: translateY(8px) scale(.96); transition: opacity .16s ease, transform .16s ease; }
+.fx-menu-grid.is-opening .fx-menu-card { animation: menu-card-in .28s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+@keyframes menu-card-in { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+@media (prefers-reduced-motion: reduce) { .fx-menu-grid, .fx-menu-grid .fx-menu-card { transition: none !important; animation: none !important; } }
+
+/* Visit page: pop-up and WhatsApp side by side, two equal cards (2 columns on every screen) */
+.fx-visit { padding-block: 32px 40px; }
+.fx-visit .fx-sec-head { margin-bottom: 18px; }
+.fx-visit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: stretch; }
+.fx-visit-card { position: relative; display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 16px 14px; box-sizing: border-box;
+  border: 2px solid var(--heading); border-radius: var(--radius-md); background: var(--surface-raised); box-shadow: var(--shadow-sticker); scroll-margin-top: 80px; }
+.fx-visit-top { display: flex; align-items: center; gap: 8px; }
+.fx-visit-icon { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 50%; background: var(--surface-tint); color: var(--heading); }
+.fx-visit-eyebrow { margin: 0; font: 700 11px/14px var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--active); }
+.fx-visit-badge { align-self: flex-start; padding: 3px 10px; border-radius: 999px; background: var(--color-ribbon); color: var(--color-forest); border: 1.5px solid var(--color-forest); font: 700 11px/16px var(--font-sans); }
+.fx-visit-title { margin: 2px 0 0; font-family: var(--font-display); font-size: 22px; line-height: 1.1; color: var(--heading); overflow-wrap: anywhere; }
+.fx-visit-text { margin: 0; font-size: 14px; line-height: 20px; color: var(--text); overflow-wrap: anywhere; }
+.fx-visit-text a { color: var(--heading); font-weight: 700; text-underline-offset: 3px; }
+.fx-visit-sub { color: var(--text-muted); font-size: 13px; line-height: 18px; }
+.fx-visit-meta { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: 13px; line-height: 18px; }
+.fx-visit-meta li { display: flex; gap: 6px; align-items: flex-start; }
+.fx-visit-meta li > svg { flex: none; margin-top: 1px; color: var(--active); }
+.fx-visit-btns { display: flex; flex-direction: column; gap: 8px; margin-top: auto; padding-top: 6px; }
+.fx-visit-btns .dj-btn { min-height: 44px; padding-inline: 10px; font-size: 14px; }
+.fx-visit-card.is-empty .fx-visit-text { color: var(--text-muted); }
+.fx-visit-later { margin: 16px auto 0; max-width: none; }
+@media (min-width: 721px) {
+  .fx-visit { padding-block: 56px 64px; }
+  .fx-visit .fx-sec-head { margin-bottom: 28px; }
+  .fx-visit-grid { gap: 24px; max-width: 900px; }
+  .fx-visit-card { padding: 28px 26px; gap: 12px; }
+  .fx-visit-icon { width: 44px; height: 44px; }
+  .fx-visit-eyebrow { font-size: 12px; }
+  .fx-visit-title { font-size: 34px; }
+  .fx-visit-text { font-size: 16px; line-height: 24px; }
+  .fx-visit-sub { font-size: 14px; line-height: 20px; }
+  .fx-visit-meta { font-size: 15px; line-height: 22px; gap: 8px; }
+  .fx-visit-btns { flex-direction: row; flex-wrap: wrap; }
+  .fx-visit-btns .dj-btn { flex: 1 1 140px; width: auto; font-size: 15px; }
+  .fx-visit-later { max-width: 900px; margin-inline: 0; }
+}
